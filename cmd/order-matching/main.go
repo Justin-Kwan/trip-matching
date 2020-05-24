@@ -4,7 +4,7 @@ import (
 	"log"
   "fmt"
 
-	"order-matching/pkg/config"
+	"order-matching/internal/config"
   "order-matching/internal/transport/websocket"
 )
 
@@ -16,6 +16,6 @@ func main() {
 
   fmt.Printf("%+v", *cfg)
   log.Printf("Websocket started")
-  sh := websocket.NewSocketHandler(cfg.WsConfig)
-  sh.Serve()
+  sh := websocket.NewSocketHandler(*cfg.WsConfig)
+  //sh.Serve()
 }

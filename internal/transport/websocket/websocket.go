@@ -44,7 +44,7 @@ func (sh *SocketHandler) handleMessage() {
 	}
 }
 
-func (sh *SocketHandler) connect(w http.ResponseWriter, r *http.Request) {
+func (sh *SocketHandler) handleConnect(w http.ResponseWriter, r *http.Request) {
 	conn, err := sh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -56,7 +56,7 @@ func (sh *SocketHandler) connect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SocketHandler) Serve() {
-	http.HandleFunc(sh.wsConfig.Path, sh.connect)
+	http.HandleFunc(sh.wsConfig.Path, sh.handleConnect)
 
 	svr := &http.Server{
 		Addr: sh.wsConfig.Addr,

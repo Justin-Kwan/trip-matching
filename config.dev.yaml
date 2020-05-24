@@ -1,0 +1,11 @@
+profile_service:
+  websocket_api_key: dev_ws_api_key
+  rest_api_key: dev_rest_api_key
+
+websocket_server:
+  read_deadline: 15
+  read_timeout: 15
+  write_timeout: 15
+  message_size_limit: 1000
+  address: "127.0.0.1"
+  path: "/ws"

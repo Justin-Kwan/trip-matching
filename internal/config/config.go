@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -9,10 +10,8 @@ import (
 
 const (
 	_cmdFlag        = "GO_ENV"
-	_cmdFlagDefault = "Invalid default environment flag"
+	_cmdFlagDefault = "Default flag"
 	_cmdFlagDesc    = "Application environment"
-	_envFilePath    = "../../"
-	_fileType       = "yaml"
 )
 
 type Config struct {
@@ -28,10 +27,15 @@ type WsConfig struct {
 	Path         string `mapstructure:"path"`
 }
 
-func validEnvFlag(env string) bool {
-	return env == "prod" || env == "dev" || env == "test"
+type FileInfo struct {
+	Name string
+	Type string
+	Path string
 }
 
+// Handles reading the environment command line flag passed in.
+// Will return an error if an invalid flag is passed in
+// (flag must be "prod", "dev", or "test").
 func parseEnvFlag() (string, error) {
 	var env string
 	flag.StringVar(&env, _cmdFlag, _cmdFlagDefault, _cmdFlagDesc)
@@ -42,10 +46,22 @@ func parseEnvFlag() (string, error) {
 	return env, nil
 }
 
-func loadConfigFile(env string) error {
-	viper.SetConfigType(_fileType)
-	viper.SetConfigName("env." + env)
-	viper.AddConfigPath(_envFilePath)
+func validEnvFlag(env string) bool {
+	return env == "prod" || env == "dev" || env == "test"
+}
+
+func newFileInfo(env string, fileType string, filePath string) *FileInfo {
+	return &FileInfo{
+		Name: "config." + env,
+		Type: fileType,
+		Path: filePath,
+	}
+}
+
+func loadConfigFile(fi *FileInfo) error {
+	viper.SetConfigName(fi.Name)
+	viper.SetConfigType(fi.Type)
+	viper.AddConfigPath(fi.Path)
 
 	if err := viper.ReadInConfig(); err != nil {
 		return errors.Errorf("Error opening file %w", err)
@@ -58,7 +74,7 @@ func unmarshalConfigFile() (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, errors.Errorf("Error unmarshalling file %w", err)
 	}
-	return cfg, nil
+	return &cfg, nil
 }
 
 func NewConfig() (*Config, error) {
@@ -67,7 +83,8 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	if err := loadConfigFile(env); err != nil {
+	fi := newFileInfo(env, "yaml", "../../")
+	if err := loadConfigFile(fi); err != nil {
 		return nil, err
 	}
 
@@ -75,6 +92,8 @@ func NewConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("%+v", *cfg)
 
 	return cfg, nil
 }

@@ -39,7 +39,6 @@ func parseEnvFlag() (string, error) {
 	if !validEnvFlag(env) {
 		return "", errors.Errorf("Invalid env flag given: %s", env)
 	}
-
 	return env, nil
 }
 
@@ -59,7 +58,6 @@ func unmarshalConfigFile() (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, errors.Errorf("Error unmarshalling file %w", err)
 	}
-
 	return cfg, nil
 }
 

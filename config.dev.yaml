@@ -3,9 +3,9 @@ profile_service:
   rest_api_key: dev_rest_api_key
 
 websocket_server:
-  read_deadline: 15
-  read_timeout: 15
-  write_timeout: 15
+  read_deadline: 50
+  read_timeout: 50
+  write_timeout: 50
   message_size_limit: 1000
-  address: "127.0.0.1"
+  address: "127.0.0.1:8080"
   path: "/ws"

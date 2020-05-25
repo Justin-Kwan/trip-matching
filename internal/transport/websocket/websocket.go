@@ -2,23 +2,26 @@ package websocket
 
 import (
 	"log"
+	"net/http"
 	"time"
-  "net/http"
 
 	"github.com/gorilla/websocket"
+	// "github.com/pkg/errors"
+	
+	"order-matching/internal/config"
 )
 
 type SocketHandler struct {
-	upgrader *websocket.Upgrader
-	conn     *websocket.Conn
-	wsConfig *WsConfig
+	WsServerConfig *WsServerConfig
+	upgrader       *websocket.Upgrader
+	conn           *websocket.Conn
 }
 
-type WsConfig struct {
-	ReadDeadline time.Time
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	MsgSizeLimit int64
+type WsServerConfig struct {
+	ReadDeadline int
+	ReadTimeout  int
+	WriteTimeout int
+	MsgSizeLimit int
 	Addr         string
 	Path         string
 }
@@ -44,7 +47,7 @@ func (sh *SocketHandler) handleMessage() {
 	}
 }
 
-func (sh *SocketHandler) handleConnect(w http.ResponseWriter, r *http.Request) {
+func (sh *SocketHandler) handleConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := sh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -56,23 +59,35 @@ func (sh *SocketHandler) handleConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SocketHandler) Serve() {
-	http.HandleFunc(sh.wsConfig.Path, sh.handleConnect)
+	http.HandleFunc(sh.WsServerConfig.Path, sh.handleConnection)
 
 	svr := &http.Server{
-		Addr: sh.wsConfig.Addr,
-		ReadTimeout: sh.wsConfig.ReadTimeout * time.Second,
-		WriteTimeout: sh.wsConfig.WriteTimeout * time.Second,
+		Addr:         sh.WsServerConfig.Addr,
+		ReadTimeout:  time.Duration(sh.WsServerConfig.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(sh.WsServerConfig.WriteTimeout) * time.Second,
 	}
 
-	/*log.Fatalf(*/svr.ListenAndServe()//)
+	log.Fatal(svr.ListenAndServe())
 }
 
-func NewSocketHandler(wsConfig *WsConfig) *SocketHandler {
-	upgrader := websocket.Upgrader{}
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+func setConfig(c *config.WsServerConfig) *WsServerConfig {
+	return &WsServerConfig{
+		ReadDeadline: c.ReadDeadline,
+		ReadTimeout:  c.ReadTimeout,
+		WriteTimeout: c.WriteTimeout,
+		MsgSizeLimit: c.MsgSizeLimit,
+		Addr:         c.Addr,
+		Path:         c.Path,
+	}
+}
+
+func NewSocketHandler(c *config.WsServerConfig) *SocketHandler {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 
 	return &SocketHandler{
-		upgrader: &upgrader,
-		wsConfig: wsConfig,
+		upgrader:       &upgrader,
+		WsServerConfig: setConfig(c),
 	}
 }

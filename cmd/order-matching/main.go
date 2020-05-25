@@ -1,21 +1,28 @@
 package main
 
 import (
+	"fmt"
 	"log"
-  "fmt"
 
 	"order-matching/internal/config"
-  "order-matching/internal/transport/websocket"
+	"order-matching/internal/transport/websocket"
 )
 
-func main() {
-  cfg, err := config.NewConfig()
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
+func initWsServer(c *config.WsServerConfig) {
+	// fmt.Printf("CONFIG STRUCT: %+v", *cfg)
+	fmt.Printf("WS SERVER STRUCT: %+v \n", *c)
 
-  fmt.Printf("%+v", *cfg)
-  log.Printf("Websocket started")
-  sh := websocket.NewSocketHandler(*cfg.WsConfig)
-  //sh.Serve()
+	sh := websocket.NewSocketHandler(c)
+	log.Printf("Websocket started")
+	sh.Serve()
+}
+
+func main() {
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	initWsServer(&(*cfg).WsServer)
+	fmt.Printf("%+v", *cfg)
 }

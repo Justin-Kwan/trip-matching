@@ -1,1 +1,2 @@
-*env.dev.yaml
+*config.dev.yaml
+*config.prod.yaml

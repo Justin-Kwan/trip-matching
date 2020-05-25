@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -15,10 +14,10 @@ const (
 )
 
 type Config struct {
-	WsConfig WsConfig `mapstructure:"websocket_server"`
+	WsServer WsServerConfig `mapstructure:"websocket_server"`
 }
 
-type WsConfig struct {
+type WsServerConfig struct {
 	ReadDeadline int    `mapstructure:"read_deadline"`
 	ReadTimeout  int    `mapstructure:"read_timeout"`
 	WriteTimeout int    `mapstructure:"write_timeout"`
@@ -38,10 +37,10 @@ type FileInfo struct {
 // (flag must be "prod", "dev", or "test").
 func parseEnvFlag() (string, error) {
 	var env string
-	flag.StringVar(&env, _cmdFlag, _cmdFlagDefault, _cmdFlagDesc)
+	flag.StringVar(&env, "GO_ENV", "", "Environment argument")
 	flag.Parse()
 	if !validEnvFlag(env) {
-		return "", errors.Errorf("Invalid env flag given: %s", env)
+		return "", errors.Errorf("Invalid environment flag: %s", env)
 	}
 	return env, nil
 }
@@ -92,8 +91,6 @@ func NewConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("%+v", *cfg)
 
 	return cfg, nil
 }

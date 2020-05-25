@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/websocket"
 	// "github.com/pkg/errors"
-	
+	"github.com/gorilla/websocket"
+
 	"order-matching/internal/config"
 )
 
@@ -26,36 +26,26 @@ type WsServerConfig struct {
 	Path         string
 }
 
-func (sh *SocketHandler) handleMessage() {
-	log.Printf("Client connected!")
+func NewSocketHandler(wsCfg *config.WsServerConfig) *SocketHandler {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 
-	for {
-		// conn.SetReadDeadline(time.Now().Add(sh.readDeadline * time.Second))
-
-		msgType, msg, err := sh.conn.ReadMessage()
-		if err != nil {
-			log.Printf("Client Disconnected!")
-			return
-		}
-
-		log.Printf("%s sent: %s\n", sh.conn.RemoteAddr(), string(msg))
-
-		if err = sh.conn.WriteMessage(msgType, msg); err != nil {
-			log.Printf("Client Disconnected!")
-			return
-		}
+	return &SocketHandler{
+		upgrader:       &upgrader,
+		WsServerConfig: setConfig(wsCfg),
 	}
 }
 
-func (sh *SocketHandler) handleConnection(w http.ResponseWriter, r *http.Request) {
-	conn, err := sh.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Fatalf(err.Error())
-		return
+func setConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
+	return &WsServerConfig{
+		ReadDeadline: wsCfg.ReadDeadline,
+		ReadTimeout:  wsCfg.ReadTimeout,
+		WriteTimeout: wsCfg.WriteTimeout,
+		MsgSizeLimit: wsCfg.MsgSizeLimit,
+		Addr:         wsCfg.Addr,
+		Path:         wsCfg.Path,
 	}
-	sh.conn = conn
-	log.Printf("connection")
-	sh.handleMessage()
 }
 
 func (sh *SocketHandler) Serve() {
@@ -70,24 +60,37 @@ func (sh *SocketHandler) Serve() {
 	log.Fatal(svr.ListenAndServe())
 }
 
-func setConfig(c *config.WsServerConfig) *WsServerConfig {
-	return &WsServerConfig{
-		ReadDeadline: c.ReadDeadline,
-		ReadTimeout:  c.ReadTimeout,
-		WriteTimeout: c.WriteTimeout,
-		MsgSizeLimit: c.MsgSizeLimit,
-		Addr:         c.Addr,
-		Path:         c.Path,
+func (sh *SocketHandler) handleConnection(w http.ResponseWriter, r *http.Request) {
+	conn, err := sh.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		// return errors.Errorf("Error upgrading connection: %w", err)
+		log.Fatalf(err.Error())
+		return
 	}
+	sh.conn = conn
+	log.Printf("connection")
+	sh.handleMessage()
 }
 
-func NewSocketHandler(c *config.WsServerConfig) *SocketHandler {
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
+func (sh *SocketHandler) handleMessage() {
+	log.Printf("Client connected!")
 
-	return &SocketHandler{
-		upgrader:       &upgrader,
-		WsServerConfig: setConfig(c),
+	for {
+		// conn.SetReadDeadline(time.Now().Add(sh.readDeadline * time.Second))
+
+		msgType, msg, err := sh.conn.ReadMessage()
+		if err != nil {
+			// ??
+			// return errors.Errorf("Invalid environment flag: %s", env)
+			log.Printf("Client Disconnected!")
+			return
+		}
+
+		log.Printf("%s sent: %s\n", sh.conn.RemoteAddr(), string(msg))
+
+		if err = sh.conn.WriteMessage(msgType, msg); err != nil {
+			log.Printf("Client Disconnected!")
+			return
+		}
 	}
 }

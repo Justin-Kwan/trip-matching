@@ -1,19 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"order-matching/internal/config"
 	"order-matching/internal/transport/websocket"
 )
 
-func initWsServer(c *config.WsServerConfig) {
-	// fmt.Printf("CONFIG STRUCT: %+v", *cfg)
-	fmt.Printf("WS SERVER STRUCT: %+v \n", *c)
-
-	sh := websocket.NewSocketHandler(c)
-	log.Printf("Websocket started")
+func initWsServer(wsCfg *config.WsServerConfig) {
+	log.Printf("websocket config: %+v \n", *wsCfg)
+	sh := websocket.NewSocketHandler(wsCfg)
+	log.Printf("\nWebsocket started")
 	sh.Serve()
 }
 
@@ -24,5 +21,4 @@ func main() {
 	}
 
 	initWsServer(&(*cfg).WsServer)
-	fmt.Printf("%+v", *cfg)
 }

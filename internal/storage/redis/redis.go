@@ -10,8 +10,8 @@ import (
 )
 
 type RedisDb struct {
-	config   *RedisConfig
-	pool *redis.Pool
+	config *RedisConfig
+	pool   *redis.Pool
 }
 
 type RedisConfig struct {
@@ -25,7 +25,7 @@ type RedisConfig struct {
 }
 
 type Db interface {
-  newConnPool() *redis.Pool
+	newConnPool() *redis.Pool
 	Select(keyId string) (string, error)
 	// SelectAll() ([]string, error)
 	Insert(keyId string, value string) error
@@ -114,28 +114,23 @@ func (rdb *RedisDb) Delete(keyId string) error {
 	return nil
 }
 
-// Gets all values and returns them in an string array
-// func (rdb *RedisDb) SelectAll() ([]string, error) {
-// 	conn := db.pool.Get()
-// 	defer conn.Close()
-//
-// 	iter := 0
-// 	values := []string{}
-//
-// 	for {
-// 		arr, err := redis.MultiBulk(conn.Do("SCAN", iter))
-// 		if err != nil {
-// 			return values, fmt.Errorf("error retrieving '%s' keys", pattern)
-// 		}
-//
-// 		iter, _ = redis.Int(arr[0], nil)
-// 		k, _ := redis.Strings(arr[1], nil)
-// 		keys = append(keys, k...)
-//
-// 		if iter == 0 {
-// 			break
-// 		}
-// 	}
-//
-// 	return keys, nil
-// }
+func (rdb *RedisDb) Exists(keyId string) (bool, error) {
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	exists, err := redis.Bool(conn.Do("EXISTS", keyId))
+	if err != nil {
+		return exists, errors.Errorf("Error checking key '%s' exists: %v", keyId, err)
+	}
+	return exists, nil
+}
+
+func (rdb *RedisDb) Clear() error {
+  conn := rdb.pool.Get()
+  defer conn.Close()
+
+  if _, err := redis.Bool(conn.Do("FLUSHDB")); err != nil {
+    return errors.Errorf("Error clearing all key value pairs: %v", err)
+  }
+  return nil
+}

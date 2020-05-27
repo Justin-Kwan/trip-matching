@@ -61,7 +61,7 @@ func NewConfig(filePath string, env string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	cfg, err := unmarshalYAML(yamlData)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func fileName(env string) string {
 func loadConfigFile(filePath string, fileName string) ([]byte, error) {
 	yamlData, err := ioutil.ReadFile(filePath + fileName)
 	if err != nil {
-		return nil, errors.Errorf("Error opening file: %s %v", fileName, err)
+		return nil, errors.Errorf("Error opening file '%s': %v", fileName, err)
 	}
 	return yamlData, nil
 }
@@ -90,7 +90,7 @@ func loadConfigFile(filePath string, fileName string) ([]byte, error) {
 func unmarshalYAML(yamlData []byte) (*Config, error) {
 	cfg := &Config{}
 	if err := yaml.Unmarshal(yamlData, &cfg); err != nil {
-		return nil, errors.Errorf("Error unmarshalling yaml")
+		return nil, errors.Errorf("Error unmarshalling yaml: %v", err)
 	}
 	return cfg, nil
 }

@@ -11,6 +11,7 @@ import (
 
 type RedisDb struct {
 	config   *RedisConfig
+	pool *redis.Pool
 }
 
 type RedisConfig struct {
@@ -24,26 +25,19 @@ type RedisConfig struct {
 }
 
 type Db interface {
-	StartConnPool() error
-	Get(keyId string) (string, error)
-	// GetAll() ([]string, error)
-	Set(keyId string, value string) error
+  newConnPool() *redis.Pool
+	Select(keyId string) (string, error)
+	// SelectAll() ([]string, error)
+	Insert(keyId string, value string) error
 	Delete(keyId string) error
 }
 
-var (
-  _pool *redis.Pool
-)
-
 func NewRedisDb(redisCfg *config.RedisConfig) (*RedisDb, error) {
-	rdb := &RedisDb{
-		config: setConfig(redisCfg),
-	}
+	rdb := &RedisDb{}
+	rdb.config = setConfig(redisCfg)
+	rdb.pool = rdb.newConnPool()
 
-  if err := rdb.createConnPool(); err != nil {
-    return nil, err
-  }
-  if err := rdb.verifyConn(); err != nil {
+	if err := rdb.verifyConn(); err != nil {
 		return nil, err
 	}
 	return rdb, nil
@@ -63,8 +57,8 @@ func setConfig(redisCfg *config.RedisConfig) *RedisConfig {
 
 // Sets a redis connection pool to the redis database struct using
 // the configuration struct's values.
-func (rdb *RedisDb) createConnPool() error {
-	_pool = &redis.Pool{
+func (rdb *RedisDb) newConnPool() *redis.Pool {
+	return &redis.Pool{
 		MaxIdle:     rdb.config.maxIdle,
 		MaxActive:   rdb.config.maxActive,
 		IdleTimeout: time.Duration(rdb.config.idleTimeout) * time.Second,
@@ -72,17 +66,15 @@ func (rdb *RedisDb) createConnPool() error {
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial(rdb.config.connProtocol, rdb.config.addr)
 			if err != nil {
-				return nil, errors.Errorf("Error creating redis connection pool %v", err)
+				return nil, errors.Errorf("Error creating redis connection pool: %v", err)
 			}
 			return conn, err
 		},
 	}
-
-  return nil
 }
 
 func (rdb *RedisDb) verifyConn() error {
-	conn := _pool.Get()
+	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	if _, err := conn.Do("PING"); err != nil {
@@ -91,9 +83,8 @@ func (rdb *RedisDb) verifyConn() error {
 	return nil
 }
 
-// Gets and returns a value based on it's key in the redis store.
-func (rdb *RedisDb) Get(keyId string) (string, error) {
-	conn := _pool.Get()
+func (rdb *RedisDb) Select(keyId string) (string, error) {
+	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	val, err := redis.String(conn.Do("GET", keyId))
@@ -103,8 +94,8 @@ func (rdb *RedisDb) Get(keyId string) (string, error) {
 	return val, nil
 }
 
-func (rdb *RedisDb) Set(keyId string, value string) error {
-	conn := _pool.Get()
+func (rdb *RedisDb) Insert(keyId string, value string) error {
+	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	if _, err := conn.Do("SET", keyId, value); err != nil {
@@ -114,7 +105,7 @@ func (rdb *RedisDb) Set(keyId string, value string) error {
 }
 
 func (rdb *RedisDb) Delete(keyId string) error {
-	conn := _pool.Get()
+	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	if _, err := conn.Do("DEL", keyId); err != nil {
@@ -124,7 +115,7 @@ func (rdb *RedisDb) Delete(keyId string) error {
 }
 
 // Gets all values and returns them in an string array
-// func (rdb *RedisDb) GetAll() ([]string, error) {
+// func (rdb *RedisDb) SelectAll() ([]string, error) {
 // 	conn := db.pool.Get()
 // 	defer conn.Close()
 //

@@ -34,13 +34,13 @@ func NewSocketHandler(wsCfg *config.WsServerConfig) *SocketHandler {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	return &SocketHandler{
-		config:   newConfig(wsCfg),
+		config:   setConfig(wsCfg),
 		upgrader: &upgrader,
 		client:   nil,
 	}
 }
 
-func newConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
+func setConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
 	return &WsServerConfig{
 		ReadDeadline: wsCfg.ReadDeadline,
 		ReadTimeout:  wsCfg.ReadTimeout,

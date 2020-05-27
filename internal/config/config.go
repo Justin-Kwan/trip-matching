@@ -55,18 +55,17 @@ func validEnvFlag(env string) bool {
 // Returns a new configuration struct containing values needed for
 // the websocket and rest server. The specific yaml config file
 // parsed into the struct depends on the runtime environment flag
-// passed in the command line.
-func NewConfig(relPath string, env string) (*Config, error) {
-	yamlData, err := loadConfigFile(relPath, fileName(env))
+// passed in the command line. The file path is relative to the caller.
+func NewConfig(filePath string, env string) (*Config, error) {
+	yamlData, err := loadConfigFile(filePath, fileName(env))
 	if err != nil {
 		return nil, err
 	}
-
+	
 	cfg, err := unmarshalYAML(yamlData)
 	if err != nil {
 		return nil, err
 	}
-
 	return cfg, nil
 }
 

@@ -21,7 +21,6 @@ func testSetup() (*RedisDb, error) {
   if err != nil {
     return nil, err
   }
-
   return rdb, nil
 }
 
@@ -30,7 +29,8 @@ func TestNewRedisDb(t *testing.T) {
   if err != nil {
     log.Fatalf(err.Error())
   }
-  rdb.Set("key", "value")
+  rdb.Insert("key", "value")
+  rdb.Delete("key")
 
   // value, err := rdb.Get("key")
   // if err != nil {

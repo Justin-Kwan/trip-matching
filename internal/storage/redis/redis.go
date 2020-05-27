@@ -3,8 +3,8 @@ package redis
 import (
 	"time"
 
+  "github.com/pkg/errors"
 	"github.com/gomodule/redigo/redis"
-	"github.com/pkg/errors"
 
 	"order-matching/internal/config"
 )
@@ -27,9 +27,10 @@ type RedisConfig struct {
 type Db interface {
 	newConnPool() *redis.Pool
 	Select(keyId string) (string, error)
-	// SelectAll() ([]string, error)
 	Insert(keyId string, value string) error
 	Delete(keyId string) error
+  Exists(keyId string) (bool, error)
+  Clear() error
 }
 
 func NewRedisDb(redisCfg *config.RedisConfig) (*RedisDb, error) {
@@ -89,7 +90,7 @@ func (rdb *RedisDb) Select(keyId string) (string, error) {
 
 	val, err := redis.String(conn.Do("GET", keyId))
 	if err != nil {
-		return "", errors.Errorf("Error getting value using key %s: %v", keyId, err)
+		return "", errors.Errorf("Error getting value using key '%s': %v", keyId, err)
 	}
 	return val, nil
 }
@@ -99,7 +100,7 @@ func (rdb *RedisDb) Insert(keyId string, value string) error {
 	defer conn.Close()
 
 	if _, err := conn.Do("SET", keyId, value); err != nil {
-		return errors.Errorf("Error setting key %s: %v", keyId, err)
+		return errors.Errorf("Error setting key '%s': %v", keyId, err)
 	}
 	return nil
 }

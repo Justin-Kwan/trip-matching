@@ -28,14 +28,13 @@ type WsServerConfig struct {
 }
 
 // TODO: inject handler with services/db needed!
-
 func NewSocketHandler(wsCfg *config.WsServerConfig) *SocketHandler {
 	upgrader := websocket.Upgrader{}
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	return &SocketHandler{
-		config:   setConfig(wsCfg),
 		upgrader: &upgrader,
+		config:   setConfig(wsCfg),
 		client:   nil,
 	}
 }
@@ -87,8 +86,6 @@ func (sh *SocketHandler) handleMessage() {
 
 		msgType, msg, err := sh.client.ReadMessage()
 		if err != nil {
-			// ??
-			// return errors.Errorf("Invalid environment flag: %s", env)
 			log.Printf("Client Disconnected!")
 			return
 		}

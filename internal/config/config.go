@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	WsServer WsServerConfig `yaml:"websocket_server"`
+	Redis    RedisConfig    `yaml:"redis_store"`
 }
 
 type WsServerConfig struct {
@@ -21,13 +22,42 @@ type WsServerConfig struct {
 	Path         string `yaml:"path"`
 }
 
-func NewConfig() (*Config, error) {
-	env, err := parseEnvFlag()
-	if err != nil {
-		return nil, err
-	}
+type RedisConfig struct {
+	Exp          int    `yaml:"item_expiry"`
+	IdleTimeout  int    `yaml:idle_timeout"`
+	MaxIdle      int    `yaml:"max_idle_connections"`
+	MaxActive    int    `yaml:"max_active_connections"`
+	Addr         string `yaml:"address"`
+	Password     string `yaml:"password"`
+	ConnProtocol string `yaml:"connection_protocol"`
+}
 
-	yamlData, err := loadConfigFile("../../", fileName(env))
+// Handles reading the environment command line flag passed in.
+// Will return an error if an invalid flag is passed in
+// (flag must be "prod", "dev", or "test").
+func ParseEnvFlag() (string, error) {
+	var env string
+	flag.StringVar(&env, "GO_ENV", "", "Runtime environment")
+	flag.Parse()
+
+	if !validEnvFlag(env) {
+		return "", errors.Errorf("Invalid environment flag: %s", env)
+	}
+	return env, nil
+}
+
+// Checks if a string passed in is a correct environment command
+// line flag.
+func validEnvFlag(env string) bool {
+	return env == "prod" || env == "dev" || env == "test"
+}
+
+// Returns a new configuration struct containing values needed for
+// the websocket and rest server. The specific yaml config file
+// parsed into the struct depends on the runtime environment flag
+// passed in the command line.
+func NewConfig(relPath string, env string) (*Config, error) {
+	yamlData, err := loadConfigFile(relPath, fileName(env))
 	if err != nil {
 		return nil, err
 	}
@@ -40,36 +70,24 @@ func NewConfig() (*Config, error) {
 	return cfg, nil
 }
 
-// Handles reading the environment command line flag passed in.
-// Will return an error if an invalid flag is passed in
-// (flag must be "prod", "dev", or "test").
-func parseEnvFlag() (string, error) {
-	var env string
-	flag.StringVar(&env, "GO_ENV", "", "Runtime environment")
-	flag.Parse()
-
-	if !validEnvFlag(env) {
-		return "", errors.Errorf("Invalid environment flag: %s", env)
-	}
-	return env, nil
-}
-
-func validEnvFlag(env string) bool {
-	return env == "prod" || env == "dev" || env == "test"
-}
-
+// Returns the config file name based on the environment flag
+// passed in.
 func fileName(env string) string {
 	return "config." + env + ".yaml"
 }
 
+// Loads and parses a yaml file given the file path and file name.
+// Then returns the parsed yaml data in a byte array.
 func loadConfigFile(filePath string, fileName string) ([]byte, error) {
 	yamlData, err := ioutil.ReadFile(filePath + fileName)
 	if err != nil {
-		return nil, errors.Errorf("Error opening file: %s", fileName)
+		return nil, errors.Errorf("Error opening file: %s %v", fileName, err)
 	}
 	return yamlData, nil
 }
 
+// Converts config yaml data (in a byte array) into a Config struct.
+// Then returns the config struct.
 func unmarshalYAML(yamlData []byte) (*Config, error) {
 	cfg := &Config{}
 	if err := yaml.Unmarshal(yamlData, &cfg); err != nil {

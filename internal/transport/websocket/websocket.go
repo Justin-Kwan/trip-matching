@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,9 +13,9 @@ import (
 )
 
 type SocketHandler struct {
-	WsServerConfig *WsServerConfig
-	upgrader       *websocket.Upgrader
-	conn           *websocket.Conn
+	config   *WsServerConfig
+	upgrader *websocket.Upgrader
+	client   *websocket.Conn
 }
 
 type WsServerConfig struct {
@@ -26,18 +27,20 @@ type WsServerConfig struct {
 	Path         string
 }
 
+// TODO: inject handler with services/db needed!
+
 func NewSocketHandler(wsCfg *config.WsServerConfig) *SocketHandler {
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
+	upgrader := websocket.Upgrader{}
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	return &SocketHandler{
-		upgrader:       &upgrader,
-		WsServerConfig: setConfig(wsCfg),
+		config:   newConfig(wsCfg),
+		upgrader: &upgrader,
+		client:   nil,
 	}
 }
 
-func setConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
+func newConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
 	return &WsServerConfig{
 		ReadDeadline: wsCfg.ReadDeadline,
 		ReadTimeout:  wsCfg.ReadTimeout,
@@ -49,25 +52,29 @@ func setConfig(wsCfg *config.WsServerConfig) *WsServerConfig {
 }
 
 func (sh *SocketHandler) Serve() {
-	http.HandleFunc(sh.WsServerConfig.Path, sh.handleConnection)
+	http.HandleFunc(sh.config.Path, sh.handleConnection)
 
 	svr := &http.Server{
-		Addr:         sh.WsServerConfig.Addr,
-		ReadTimeout:  time.Duration(sh.WsServerConfig.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(sh.WsServerConfig.WriteTimeout) * time.Second,
+		Addr:         sh.config.Addr,
+		ReadTimeout:  time.Duration(sh.config.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(sh.config.WriteTimeout) * time.Second,
 	}
 
+	log.Printf("\nWebsocket started")
 	log.Fatal(svr.ListenAndServe())
 }
 
 func (sh *SocketHandler) handleConnection(w http.ResponseWriter, r *http.Request) {
+	// call controller?? -> auth before upgrading the connection
+	// pass a service's interface and respond in callback
+
 	conn, err := sh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		// return errors.Errorf("Error upgrading connection: %w", err)
+		fmt.Fprintf(w, "Error upgrading connection")
 		log.Fatalf(err.Error())
-		return
 	}
-	sh.conn = conn
+
+	sh.client = conn
 	log.Printf("connection")
 	sh.handleMessage()
 }
@@ -78,7 +85,7 @@ func (sh *SocketHandler) handleMessage() {
 	for {
 		// conn.SetReadDeadline(time.Now().Add(sh.readDeadline * time.Second))
 
-		msgType, msg, err := sh.conn.ReadMessage()
+		msgType, msg, err := sh.client.ReadMessage()
 		if err != nil {
 			// ??
 			// return errors.Errorf("Invalid environment flag: %s", env)
@@ -86,9 +93,9 @@ func (sh *SocketHandler) handleMessage() {
 			return
 		}
 
-		log.Printf("%s sent: %s\n", sh.conn.RemoteAddr(), string(msg))
+		log.Printf("%s sent: %s\n", sh.client.RemoteAddr(), string(msg))
 
-		if err = sh.conn.WriteMessage(msgType, msg); err != nil {
+		if err = sh.client.WriteMessage(msgType, msg); err != nil {
 			log.Printf("Client Disconnected!")
 			return
 		}

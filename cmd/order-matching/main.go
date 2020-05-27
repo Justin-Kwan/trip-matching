@@ -7,18 +7,27 @@ import (
 	"order-matching/internal/transport/websocket"
 )
 
+const (
+	_configFilePath = "../../"
+)
+
 func initWsServer(wsCfg *config.WsServerConfig) {
-	log.Printf("websocket config: %+v \n", *wsCfg)
 	sh := websocket.NewSocketHandler(wsCfg)
-	log.Printf("\nWebsocket started")
 	sh.Serve()
 }
 
 func main() {
-	cfg, err := config.NewConfig()
+	env, err := config.ParseEnvFlag()
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
+	cfg, err := config.NewConfig(_configFilePath, env)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	log.Printf("App config: %+v \n", *cfg)
 
 	initWsServer(&(*cfg).WsServer)
 }

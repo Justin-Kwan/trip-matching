@@ -1,0 +1,78 @@
+
+Http Endpoints
+
+GET /v1/auth-ticket/:
+
+  Header:
+    {
+      Content-Type: string,
+      api-key: string
+    }
+
+  Request Body:
+    None
+
+  Response Success Body:
+    {
+      authKey: string
+    }
+
+Web-socket Messages
+
+  # map generated id of courier client to redis of { id, location }
+  # a single connection runs in one go-routine
+
+  Inbound Messages:
+
+    Creating Connection Header:
+      {
+        authKey: string,
+        courierId: string  # probably will generate id server side though, mapping
+      }
+
+    Accept Trip Payload:
+      {
+        message: accept trip
+      }
+
+    Reject Trip Payload:
+      {
+        message: reject trip
+      }
+
+  Outbound Messages:
+
+    Offer Trip Payload:
+      {
+        event: trip offer,
+        data: {
+          tripInfo: {
+            tripId: string,
+            tripDesc: string,
+            tripDuration: float
+            bidPrice: float,
+            location: {
+              locationId: string,
+              latitude: float,
+              longitude: float
+            }
+          }
+        }
+      }
+
+    Trip Match Confirmation:
+      {
+        event: trip confirmed,
+        data: {
+          tripId: string
+        }
+      }
+
+    Error Occurred:
+      {
+        event: error,
+        data: {
+          message: string,
+          details: string
+        }
+      }

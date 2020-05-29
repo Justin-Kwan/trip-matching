@@ -75,46 +75,46 @@ func TestVerifyConn(t *testing.T) {
 }
 
 // Tests both insert and select functions.
-func TestInsertSelect(t *testing.T) {
+func TestAddGet(t *testing.T) {
 	// function under test
-	if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
+	if err := _rdb.Add(_testKey1, _testVal1); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val1, err := _rdb.Select(_testKey1)
+	val1, err := _rdb.Get(_testKey1)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal1, val1, "should insert a key with a small value")
 
 	// function under test
-	if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
+	if err := _rdb.Add(_testKey2, _testVal2); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val2, err := _rdb.Select(_testKey2)
+	val2, err := _rdb.Get(_testKey2)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal2, val2, "should insert a key with a small value")
 
 	// function under test
-	if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
+	if err := _rdb.Add(_testKey3, _testVal3); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val3, err := _rdb.Select(_testKey3)
+	val3, err := _rdb.Get(_testKey3)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal3, val3, "should insert a key with a large value")
 
 	// function under test
-	if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
+	if err := _rdb.Add(_testKey4, _testVal4); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val4, err := _rdb.Select(_testKey4)
+	val4, err := _rdb.Get(_testKey4)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -124,7 +124,7 @@ func TestInsertSelect(t *testing.T) {
 func TestDelete(t *testing.T) {
   // new test
   // setup
-  if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
+  if err := _rdb.Add(_testKey1, _testVal1); err != nil {
 		log.Fatal(err.Error())
 	}
   // setup assertion
@@ -147,7 +147,7 @@ func TestDelete(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
+  if err := _rdb.Add(_testKey2, _testVal2); err != nil {
     log.Fatal(err.Error())
   }
   // setup assertion
@@ -170,7 +170,7 @@ func TestDelete(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
+  if err := _rdb.Add(_testKey3, _testVal3); err != nil {
     log.Fatal(err.Error())
   }
   // setup assertion
@@ -193,7 +193,7 @@ func TestDelete(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
+  if err := _rdb.Add(_testKey4, _testVal4); err != nil {
     log.Fatal(err.Error())
   }
   // setup assertion
@@ -226,7 +226,7 @@ func TestExists(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
+  if err := _rdb.Add(_testKey1, _testVal1); err != nil {
     log.Fatal(err.Error())
   }
   // function under test
@@ -238,7 +238,7 @@ func TestExists(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
+  if err := _rdb.Add(_testKey2, _testVal2); err != nil {
     log.Fatal(err.Error())
   }
   // function under test
@@ -250,7 +250,7 @@ func TestExists(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
+  if err := _rdb.Add(_testKey3, _testVal3); err != nil {
     log.Fatal(err.Error())
   }
   // function under test
@@ -262,7 +262,7 @@ func TestExists(t *testing.T) {
 
   // new test
   // setup
-  if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
+  if err := _rdb.Add(_testKey4, _testVal4); err != nil {
     log.Fatal(err.Error())
   }
   // function under test

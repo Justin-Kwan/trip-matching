@@ -9,7 +9,7 @@ import (
 	"order-matching/internal/config"
 )
 
-type RedisDb struct {
+type RedisDB struct {
 	config *RedisConfig
 	pool   *redis.Pool
 }
@@ -24,17 +24,8 @@ type RedisConfig struct {
 	connProtocol string
 }
 
-type Db interface {
-	newConnPool() *redis.Pool
-	Select(keyId string) (string, error)
-	Insert(keyId string, value string) error
-	Delete(keyId string) error
-  Exists(keyId string) (bool, error)
-  Clear() error
-}
-
-func NewRedisDb(redisCfg *config.RedisConfig) (*RedisDb, error) {
-	rdb := &RedisDb{}
+func NewRedisDB(redisCfg *config.RedisConfig) (*RedisDB, error) {
+	rdb := &RedisDB{}
 	rdb.config = setConfig(redisCfg)
 	rdb.pool = rdb.newConnPool()
 
@@ -58,7 +49,7 @@ func setConfig(redisCfg *config.RedisConfig) *RedisConfig {
 
 // Sets a redis connection pool to the redis database struct using
 // the configuration struct's values.
-func (rdb *RedisDb) newConnPool() *redis.Pool {
+func (rdb *RedisDB) newConnPool() *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     rdb.config.maxIdle,
 		MaxActive:   rdb.config.maxActive,
@@ -74,7 +65,7 @@ func (rdb *RedisDb) newConnPool() *redis.Pool {
 	}
 }
 
-func (rdb *RedisDb) verifyConn() error {
+func (rdb *RedisDB) verifyConn() error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -84,7 +75,7 @@ func (rdb *RedisDb) verifyConn() error {
 	return nil
 }
 
-func (rdb *RedisDb) Select(keyId string) (string, error) {
+func (rdb *RedisDB) Get(keyId string) (string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -95,7 +86,7 @@ func (rdb *RedisDb) Select(keyId string) (string, error) {
 	return val, nil
 }
 
-func (rdb *RedisDb) Insert(keyId string, value string) error {
+func (rdb *RedisDB) Add(keyId string, value string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -105,7 +96,7 @@ func (rdb *RedisDb) Insert(keyId string, value string) error {
 	return nil
 }
 
-func (rdb *RedisDb) Delete(keyId string) error {
+func (rdb *RedisDB) Delete(keyId string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -115,7 +106,7 @@ func (rdb *RedisDb) Delete(keyId string) error {
 	return nil
 }
 
-func (rdb *RedisDb) Exists(keyId string) (bool, error) {
+func (rdb *RedisDB) Exists(keyId string) (bool, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -126,7 +117,7 @@ func (rdb *RedisDb) Exists(keyId string) (bool, error) {
 	return exists, nil
 }
 
-func (rdb *RedisDb) Clear() error {
+func (rdb *RedisDB) Clear() error {
   conn := rdb.pool.Get()
   defer conn.Close()
 

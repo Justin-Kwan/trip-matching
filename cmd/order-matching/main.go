@@ -4,17 +4,13 @@ import (
 	"log"
 
 	"order-matching/internal/config"
+	"order-matching/internal/storage/redis"
 	"order-matching/internal/transport/websocket"
 )
 
 const (
 	_configFilePath = "../../"
 )
-
-func initWsServer(wsCfg *config.WsServerConfig) {
-	sh := websocket.NewSocketHandler(wsCfg)
-	sh.Serve()
-}
 
 func main() {
 	env, err := config.ParseEnvFlag()
@@ -29,5 +25,15 @@ func main() {
 
 	log.Printf("App config: %+v \n", *cfg)
 
-	initWsServer(&(*cfg).WsServer)
+	// setup database
+	_, err = redis.NewRedisDB(&(*cfg).Redis)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	log.Printf("Redis connection pool initialized...")
+
+	// setup socket server
+	sh := websocket.NewSocketHandler(&(*cfg).WsServer)
+	sh.Serve()
+
 }

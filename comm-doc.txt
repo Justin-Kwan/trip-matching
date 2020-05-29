@@ -24,6 +24,20 @@ Web-socket Messages
 
   Inbound Messages:
 
+    Queue Order (from consumer):
+      {
+      "orderInfo": {
+          "location":{
+            "lon": float,
+            "lat": float
+          },
+          "description": string,
+          "consumerId": string,
+          "bidPrice": float,
+          "duration": "string" (not sure if consumer should send?)
+        }
+      }
+
     Creating Connection Header:
       {
         authKey: string,
@@ -32,29 +46,29 @@ Web-socket Messages
 
     Accept Trip Payload:
       {
-        message: accept trip
+        message: accept order
       }
 
     Reject Trip Payload:
       {
-        message: reject trip
+        message: reject order
       }
 
   Outbound Messages:
 
     Offer Trip Payload:
       {
-        event: trip offer,
+        event: order offer,
         data: {
-          tripInfo: {
-            tripId: string,
-            tripDesc: string,
-            tripDuration: float
+          orderInfo: {
+            id: string,
+            description: string,
+            duration: float
             bidPrice: float,
+            timeRequested: string,
             location: {
-              locationId: string,
-              latitude: float,
-              longitude: float
+              lon: float,
+              lat: float
             }
           }
         }
@@ -62,9 +76,9 @@ Web-socket Messages
 
     Trip Match Confirmation:
       {
-        event: trip confirmed,
+        event: order confirmed,
         data: {
-          tripId: string
+          orderId: string
         }
       }
 

@@ -59,7 +59,7 @@ func (sh *SocketHandler) Serve() {
 		WriteTimeout: time.Duration(sh.config.WriteTimeout) * time.Second,
 	}
 
-	log.Printf("\nWebsocket started")
+	log.Printf("Websocket server started...")
 	log.Fatal(svr.ListenAndServe())
 }
 

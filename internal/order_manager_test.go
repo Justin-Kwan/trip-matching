@@ -1,7 +1,7 @@
 package internal
 
 import (
-  "os"
+	"os"
 	// "log"
 	"testing"
 
@@ -20,8 +20,7 @@ const (
 var (
 	_orderManager *OrderManager
 
-
-	testOrderBytes1 = []byte(`{
+	testOrderBytes1 = `{
   "orderInfo": {
     "location":{
       "lon": 43.45123431,
@@ -31,28 +30,30 @@ var (
     "consumerId": "test_order_consumer_id1",
     "bidPrice": 100.23
     }
-  }`)
+  }`
 )
 
 func TestMain(m *testing.M) {
-	beforeAll()
+	rdb := beforeAll()
 	code := m.Run()
-	// afterAll()
+	afterAll(rdb)
 	os.Exit(code)
 }
 
-func beforeAll() {
+func beforeAll() *redis.RedisDb {
 	testCfg, _ := config.NewConfig(_configFilePath, _env)
 	testRedisCfg := &(*testCfg).Redis
 	rdb, _ := redis.NewRedisDb(testRedisCfg)
-	// rdb.Clear()
+	rdb.Clear()
 	_orderManager = NewOrderManager(rdb)
+  return rdb
 }
 
-// func afterAll() {
-//   _rdb.Clear()
-// }
+func afterAll(rdb *redis.RedisDb) {
+  rdb.Clear()
+}
 
 func TestAddOrder(t *testing.T) {
 	_orderManager.AddOrder(testOrderBytes1)
+
 }

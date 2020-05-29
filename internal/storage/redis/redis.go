@@ -86,11 +86,11 @@ func (rdb *RedisDb) Select(keyId string) (string, error) {
 	return val, nil
 }
 
-func (rdb *RedisDb) Insert(keyId string, value string) error {
+func (rdb *RedisDb) Insert(keyId string, val string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	if _, err := conn.Do("SET", keyId, value); err != nil {
+	if _, err := conn.Do("SET", keyId, val); err != nil {
 		return errors.Errorf("Error setting key '%s': %v", keyId, err)
 	}
 	return nil
@@ -106,15 +106,12 @@ func (rdb *RedisDb) Delete(keyId string) error {
 	return nil
 }
 
-func (rdb *RedisDb) Exists(keyId string) (bool, error) {
+func (rdb *RedisDb) Exists(keyId string) bool {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	exists, err := redis.Bool(conn.Do("EXISTS", keyId))
-	if err != nil {
-		return exists, errors.Errorf("Error checking key '%s' exists: %v", keyId, err)
-	}
-	return exists, nil
+	exists, _ := redis.Bool(conn.Do("EXISTS", keyId))
+	return exists
 }
 
 func (rdb *RedisDb) Clear() error {

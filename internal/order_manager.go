@@ -11,7 +11,7 @@ type Db interface {
 	Select(keyId string) (string, error)
 	Insert(keyId string, value string) error
 	Delete(keyId string) error
-  Exists(keyId string) (bool, error)
+  Exists(keyId string) bool
   Clear() error
 }
 
@@ -30,7 +30,21 @@ func NewOrderManager(db Db) *OrderManager {
 	}
 }
 
-func (om *OrderManager) AddOrder(params []byte) (string, error) {
+// func (om *OrderManager) GetOrder(orderId string) (*Order, error) {
+// 	// how to auth?
+//
+// 	orderStr, err := om.db.Select(orderId)
+// 	if err != nil {
+// 		return "", err
+// 	}
+//
+// 	order := &Order{}
+// 	order.UnmarshalJSON(orderStr)
+//
+// 	return order
+// }
+
+func (om *OrderManager) AddOrder(params string) (string, error) {
   // order validation
   // - validate lon, lat
   // - validate price given > 0 and 2 decimal places (in schema definition? with minimum price)
@@ -38,11 +52,7 @@ func (om *OrderManager) AddOrder(params []byte) (string, error) {
   // create order struct
   order := order.NewOrder(params)
 
-	orderExists, err := om.db.Exists(order.Id)
-	if err != nil {
-		return "", err
-	}
-	if orderExists {
+	if om.db.Exists(order.Id) {
 		return "", errors.Errorf("Error, order with id '%s' already exists", order.Id)
 	}
 

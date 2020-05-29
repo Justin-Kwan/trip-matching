@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
+const (
 	// test order json payloads to create new order structs
-	_testOrderParamBytes1 = []byte(`{"location":{"lon":43.45123431,"lat":75.13124123},"description":"test_order_description1","consumerId":"test_order_consumer_id1","bidPrice":100.23}`)
-	_testOrderParamBytes2 = []byte(`{"location":{"lon":43.45123432,"lat":75.13124122},"description":"test_order_description2","consumerId":"test_order_consumer_id2","bidPrice":200.23}`)
-	_testOrderParamBytes3 = []byte(`{"location":{"lon":0,"lat":0},"description":"","consumerId":"","bidPrice":0}`)
+	_testOrderParamStr1 = `{"location":{"lon":43.45123431,"lat":75.13124123},"description":"test_order_description1","consumerId":"test_order_consumer_id1","bidPrice":100.23}`
+	_testOrderParamStr2 = `{"location":{"lon":43.45123432,"lat":75.13124122},"description":"test_order_description2","consumerId":"test_order_consumer_id2","bidPrice":200.23}`
+	_testOrderParamStr3 = `{"location":{"lon":0,"lat":0},"description":"","consumerId":"","bidPrice":0}`
 
 	// test order json payloads to marshal to order structs
-	_testOrderBytes1 = []byte(`{"location":{"lon":1.23,"lat":1.63},"id":"test_order_id1","description":"test_order_description1","timeRequested":"test_order_time_requested1","duration":"test_order_duration1","consumerId":"test_order_consumer_id1","bidPrice":1.234}`)
-	_testOrderBytes2 = []byte(`{"location":{"lon":2.23,"lat":2.43},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":1.236}`)
-	_testOrderBytes3 = []byte(`{"location":{"lon":0,"lat":0},"id":"","description":"","timeRequested":"","duration":"","consumerId":"","bidPrice":0}`)
-	_testBadOrderBytes4 = []byte(`{"location":{"lon": "should not be a string","lat":0},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":654.2312451232}`)
-	_testBadOrderBytes5 = []byte(`{"location":{"lon":123,"lat":234},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":"should not be a string"}`)
+	_testOrderStr1 = `{"location":{"lon":1.23,"lat":1.63},"id":"test_order_id1","description":"test_order_description1","timeRequested":"test_order_time_requested1","duration":"test_order_duration1","consumerId":"test_order_consumer_id1","bidPrice":1.234}`
+	_testOrderStr2 = `{"location":{"lon":2.23,"lat":2.43},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":1.236}`
+	_testOrderStr3 = `{"location":{"lon":0,"lat":0},"id":"","description":"","timeRequested":"","duration":"","consumerId":"","bidPrice":0}`
+	_testBadOrderStr4 = `{"location":{"lon": "should not be a string","lat":0},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":654.2312451232}`
+	_testBadOrderStr5 = `{"location":{"lon":123,"lat":234},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":"should not be a string"}`
 )
 
 func assertOrderValid(t *testing.T, actual *Order, expected *Order) {
@@ -34,7 +34,7 @@ func assertOrderValid(t *testing.T, actual *Order, expected *Order) {
 func TestNewOrder(t *testing.T) {
 	// new test
 	// function under test
-	order1 := NewOrder(_testOrderParamBytes1)
+	order1 := NewOrder(_testOrderParamStr1)
 	assertOrderValid(t, &Order{
 		Location: OrderLocation{
 			Lon: 43.45123431,
@@ -47,7 +47,7 @@ func TestNewOrder(t *testing.T) {
 
 	// new test
 	// function under test
-	order2 := NewOrder(_testOrderParamBytes2)
+	order2 := NewOrder(_testOrderParamStr2)
 	assertOrderValid(t, &Order{
 		Location: OrderLocation{
 			Lon: 43.45123432,
@@ -60,7 +60,7 @@ func TestNewOrder(t *testing.T) {
 
 	// new test
 	// function under test
-	order3 := NewOrder(_testOrderParamBytes3)
+	order3 := NewOrder(_testOrderParamStr3)
 	assertOrderValid(t, &Order{
 		Location: OrderLocation{
 			Lon: 0,
@@ -88,11 +88,11 @@ func TestMarshalJSON(t *testing.T) {
 		BidPrice:      1.234,
 	}
 	// function under test
-	orderBytes1, err := order1.MarshalJSON()
+	orderStr1, err := order1.MarshalJSON()
 	if err != nil {
 		log.Printf(err.Error())
 	}
-	assert.Equal(t, string(_testOrderBytes1), string(orderBytes1), "should marshal order struct to json")
+	assert.Equal(t, string(_testOrderStr1), string(orderStr1), "should marshal order struct to json")
 
 	// new test
 	// setup
@@ -109,11 +109,11 @@ func TestMarshalJSON(t *testing.T) {
 		BidPrice:      1.236,
 	}
 	// function under test
-	orderBytes2, err := order2.MarshalJSON()
+	orderStr2, err := order2.MarshalJSON()
 	if err != nil {
 		log.Printf(err.Error())
 	}
-	assert.Equal(t, _testOrderBytes2, orderBytes2, "should marshal order struct to json")
+	assert.Equal(t, _testOrderStr2, orderStr2, "should marshal order struct to json")
 
 	// new test
 	// setup
@@ -130,18 +130,18 @@ func TestMarshalJSON(t *testing.T) {
 		BidPrice:      0,
 	}
 	// function under test
-	orderBytes3, err := order3.MarshalJSON()
+	orderStr3, err := order3.MarshalJSON()
 	if err != nil {
 		log.Printf(err.Error())
 	}
-	assert.Equal(t, _testOrderBytes3, orderBytes3, "should marshal order struct with empty string fields and zeroes to json")
+	assert.Equal(t, _testOrderStr3, orderStr3, "should marshal order struct with empty string fields and zeroes to json")
 }
 
 func TestUnmarshalJSON(t *testing.T) {
 	// new test
 	order := &Order{}
 	// function under test
-	if err := order.UnmarshalJSON(_testOrderBytes1); err != nil {
+	if err := order.UnmarshalJSON(_testOrderStr1); err != nil {
 		log.Fatal(err.Error())
 	}
 	assert.Equal(t, &Order{
@@ -160,7 +160,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	// new test
 	order = &Order{}
 	// function under test
-	if err := order.UnmarshalJSON(_testOrderBytes2); err != nil {
+	if err := order.UnmarshalJSON(_testOrderStr2); err != nil {
 		log.Fatal(err.Error())
 	}
 	assert.Equal(t, &Order{
@@ -179,7 +179,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	// new test
 	order = &Order{}
 	// function under test
-	if err := order.UnmarshalJSON(_testOrderBytes3); err != nil {
+	if err := order.UnmarshalJSON(_testOrderStr3); err != nil {
 		log.Fatal(err.Error())
 	}
 	assert.Equal(t, &Order{
@@ -198,12 +198,12 @@ func TestUnmarshalJSON(t *testing.T) {
 	// new test
 	order = &Order{}
 	// function under test
-	err := order.UnmarshalJSON(_testBadOrderBytes4)
-	assert.EqualError(t, err, "Error unmarshalling to order struct json: cannot unmarshal string into Go struct field OrderLocation.lon of type float64")
+	err := order.UnmarshalJSON(_testBadOrderStr4)
+	assert.EqualError(t, err, "Error unmarshalling to order struct: json: cannot unmarshal string into Go struct field OrderLocation.lon of type float64")
 
 	// new test
 	order = &Order{}
 	// function under test
-	err = order.UnmarshalJSON(_testBadOrderBytes5)
-	assert.EqualError(t, err, "Error unmarshalling to order struct json: cannot unmarshal string into Go struct field OrderCopy.bidPrice of type float64")
+	err = order.UnmarshalJSON(_testBadOrderStr5)
+	assert.EqualError(t, err, "Error unmarshalling to order struct: json: cannot unmarshal string into Go struct field OrderCopy.bidPrice of type float64")
 }

@@ -26,7 +26,7 @@ func main() {
 	log.Printf("App config: %+v \n", *cfg)
 
 	// setup database
-	_, err = redis.NewRedisDB(&(*cfg).Redis)
+	_, err = redis.NewRedisDb(&(*cfg).Redis)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

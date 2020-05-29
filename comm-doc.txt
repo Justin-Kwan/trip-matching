@@ -26,16 +26,14 @@ Web-socket Messages
 
     Queue Order (from consumer):
       {
-      "orderInfo": {
-          "location":{
-            "lon": float,
-            "lat": float
-          },
-          "description": string,
-          "consumerId": string,
-          "bidPrice": float,
-          "duration": "string" (not sure if consumer should send?)
-        }
+        "location":{
+          "lon": float,
+          "lat": float
+        },
+        "description": string,
+        "consumerId": string,
+        "bidPrice": float,
+        "duration": "string" (not sure if consumer should send?)
       }
 
     Creating Connection Header:

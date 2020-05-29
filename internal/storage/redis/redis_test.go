@@ -44,8 +44,7 @@ const (
 )
 
 var (
-	_testRedisCfg *config.RedisConfig
-	_rdb          *RedisDb
+	_rdb *RedisDb
 )
 
 // Runs test setup and teardown functions before and after all
@@ -59,13 +58,13 @@ func TestMain(m *testing.M) {
 
 func beforeAll() {
 	testCfg, _ := config.NewConfig(_configFilePath, _env)
-	_testRedisCfg = &(*testCfg).Redis
-	_rdb, _ = NewRedisDb(_testRedisCfg)
-  _rdb.Clear()
+	testRedisCfg := &(*testCfg).Redis
+	_rdb, _ = NewRedisDb(testRedisCfg)
+	// _rdb.Clear()
 }
 
 func afterAll() {
-  _rdb.Clear()
+	// _rdb.Clear()
 }
 
 // Tests function that verifies that a connection is established.
@@ -75,46 +74,46 @@ func TestVerifyConn(t *testing.T) {
 }
 
 // Tests both insert and select functions.
-func TestAddGet(t *testing.T) {
+func TestInsertSelect(t *testing.T) {
 	// function under test
-	if err := _rdb.Add(_testKey1, _testVal1); err != nil {
+	if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val1, err := _rdb.Get(_testKey1)
+	val1, err := _rdb.Select(_testKey1)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal1, val1, "should insert a key with a small value")
 
 	// function under test
-	if err := _rdb.Add(_testKey2, _testVal2); err != nil {
+	if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val2, err := _rdb.Get(_testKey2)
+	val2, err := _rdb.Select(_testKey2)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal2, val2, "should insert a key with a small value")
 
 	// function under test
-	if err := _rdb.Add(_testKey3, _testVal3); err != nil {
+	if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val3, err := _rdb.Get(_testKey3)
+	val3, err := _rdb.Select(_testKey3)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal3, val3, "should insert a key with a large value")
 
 	// function under test
-	if err := _rdb.Add(_testKey4, _testVal4); err != nil {
+	if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
 		log.Fatal(err.Error())
 	}
 	// function under test
-	val4, err := _rdb.Get(_testKey4)
+	val4, err := _rdb.Select(_testKey4)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -122,153 +121,153 @@ func TestAddGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey1, _testVal1); err != nil {
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
 		log.Fatal(err.Error())
 	}
-  // setup assertion
-  exists, err := _rdb.Exists(_testKey1)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
-  // function under test
-  err = _rdb.Delete(_testKey1)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  // final assertion
-  exists, err = _rdb.Exists(_testKey1)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.False(t, exists, "should assert deleted key value pair does not exist")
+	// setup assertion
+	exists, err := _rdb.Exists(_testKey1)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
+	// function under test
+	err = _rdb.Delete(_testKey1)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// final assertion
+	exists, err = _rdb.Exists(_testKey1)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.False(t, exists, "should assert deleted key value pair does not exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey2, _testVal2); err != nil {
-    log.Fatal(err.Error())
-  }
-  // setup assertion
-  exists, err = _rdb.Exists(_testKey2)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
-  // function under test
-  err = _rdb.Delete(_testKey2)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  // final assertion
-  exists, err = _rdb.Exists(_testKey2)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.False(t, exists, "should assert deleted key value pair does not exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
+		log.Fatal(err.Error())
+	}
+	// setup assertion
+	exists, err = _rdb.Exists(_testKey2)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
+	// function under test
+	err = _rdb.Delete(_testKey2)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// final assertion
+	exists, err = _rdb.Exists(_testKey2)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.False(t, exists, "should assert deleted key value pair does not exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey3, _testVal3); err != nil {
-    log.Fatal(err.Error())
-  }
-  // setup assertion
-  exists, err = _rdb.Exists(_testKey3)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
-  // function under test
-  err = _rdb.Delete(_testKey3)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  // final assertion
-  exists, err = _rdb.Exists(_testKey3)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.False(t, exists, "should assert deleted key value pair does not exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
+		log.Fatal(err.Error())
+	}
+	// setup assertion
+	exists, err = _rdb.Exists(_testKey3)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
+	// function under test
+	err = _rdb.Delete(_testKey3)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// final assertion
+	exists, err = _rdb.Exists(_testKey3)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.False(t, exists, "should assert deleted key value pair does not exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey4, _testVal4); err != nil {
-    log.Fatal(err.Error())
-  }
-  // setup assertion
-  exists, err = _rdb.Exists(_testKey4)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
-  // function under test
-  err = _rdb.Delete(_testKey4)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  // final assertion
-  exists, err = _rdb.Exists(_testKey4)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.False(t, exists, "should assert deleted key value pair does not exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
+		log.Fatal(err.Error())
+	}
+	// setup assertion
+	exists, err = _rdb.Exists(_testKey4)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
+	// function under test
+	err = _rdb.Delete(_testKey4)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// final assertion
+	exists, err = _rdb.Exists(_testKey4)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.False(t, exists, "should assert deleted key value pair does not exist")
 }
 
 func TestExists(t *testing.T) {
-  // new test
-  // function under test
-  exists, err := _rdb.Exists("non_existent_key")
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.False(t, exists, "should assert key does not exist")
+	// new test
+	// function under test
+	exists, err := _rdb.Exists("non_existent_key")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.False(t, exists, "should assert key does not exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey1, _testVal1); err != nil {
-    log.Fatal(err.Error())
-  }
-  // function under test
-  exists, err = _rdb.Exists(_testKey1)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
+		log.Fatal(err.Error())
+	}
+	// function under test
+	exists, err = _rdb.Exists(_testKey1)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey2, _testVal2); err != nil {
-    log.Fatal(err.Error())
-  }
-  // function under test
-  exists, err = _rdb.Exists(_testKey2)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
+		log.Fatal(err.Error())
+	}
+	// function under test
+	exists, err = _rdb.Exists(_testKey2)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey3, _testVal3); err != nil {
-    log.Fatal(err.Error())
-  }
-  // function under test
-  exists, err = _rdb.Exists(_testKey3)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
+		log.Fatal(err.Error())
+	}
+	// function under test
+	exists, err = _rdb.Exists(_testKey3)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
 
-  // new test
-  // setup
-  if err := _rdb.Add(_testKey4, _testVal4); err != nil {
-    log.Fatal(err.Error())
-  }
-  // function under test
-  exists, err = _rdb.Exists(_testKey4)
-  if err != nil {
-    log.Fatalf(err.Error())
-  }
-  assert.True(t, exists, "inserted key value pair should exist")
+	// new test
+	// setup
+	if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
+		log.Fatal(err.Error())
+	}
+	// function under test
+	exists, err = _rdb.Exists(_testKey4)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.True(t, exists, "inserted key value pair should exist")
 }

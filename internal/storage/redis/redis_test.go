@@ -3,6 +3,7 @@ package redis
 import (
 	"log"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -74,12 +75,11 @@ func TestVerifyConn(t *testing.T) {
 }
 
 // Tests both insert and select functions.
-func TestInsertSelect(t *testing.T) {
+func TestInsert(t *testing.T) {
 	// function under test
 	if err := _rdb.Insert(_testKey1, _testVal1); err != nil {
 		log.Fatal(err.Error())
 	}
-	// function under test
 	val1, err := _rdb.Select(_testKey1)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -90,7 +90,6 @@ func TestInsertSelect(t *testing.T) {
 	if err := _rdb.Insert(_testKey2, _testVal2); err != nil {
 		log.Fatal(err.Error())
 	}
-	// function under test
 	val2, err := _rdb.Select(_testKey2)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -101,7 +100,6 @@ func TestInsertSelect(t *testing.T) {
 	if err := _rdb.Insert(_testKey3, _testVal3); err != nil {
 		log.Fatal(err.Error())
 	}
-	// function under test
 	val3, err := _rdb.Select(_testKey3)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -112,16 +110,33 @@ func TestInsertSelect(t *testing.T) {
 	if err := _rdb.Insert(_testKey4, _testVal4); err != nil {
 		log.Fatal(err.Error())
 	}
-	// function under test
 	val4, err := _rdb.Select(_testKey4)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	assert.Equal(t, _testVal4, val4, "should insert a key with an empty string value")
 
-	// function under test
-	_, err = _rdb.Select("non_existent_key")
+	_rdb.Clear()
+}
+
+func TestSelect(t *testing.T) {
+	// function under test (selecting non-existent key)
+	_, err := _rdb.Select("non_existent_key")
 	assert.EqualError(t, err, "Error getting value using key 'non_existent_key': redigo: nil returned")
+
+	// function under test (selecting non-existent key)
+	_, err = _rdb.Select("test_key 1")
+	assert.EqualError(t, err, "Error getting value using key 'test_key 1': redigo: nil returned")
+
+	// function under test (selecting non-existent key)
+	_, err = _rdb.Select(" test_key2")
+	assert.EqualError(t, err, "Error getting value using key ' test_key2': redigo: nil returned")
+
+	// function under test (selecting non-existent key)
+	_, err = _rdb.Select("test_key3 ")
+	assert.EqualError(t, err, "Error getting value using key 'test_key3 ': redigo: nil returned")
+
+	_rdb.Clear()
 }
 
 func TestDelete(t *testing.T) {
@@ -184,6 +199,8 @@ func TestDelete(t *testing.T) {
 	}
 	// final assertion
 	assert.False(t, _rdb.Exists(_testKey4), "should assert deleted key value pair does not exist")
+
+	_rdb.Clear()
 }
 
 func TestExists(t *testing.T) {
@@ -222,4 +239,64 @@ func TestExists(t *testing.T) {
 	}
 	// function under test
 	assert.True(t, _rdb.Exists(_testKey4), "inserted key value pair should exist")
+
+	_rdb.Clear()
+}
+
+func insertKeys(keyCount int) {
+	for i := 0; i < keyCount; i++ {
+		_rdb.Insert(strconv.Itoa(i), "test_value")
+	}
+}
+
+func TestCountKeys(t *testing.T) {
+	_rdb.Clear()
+
+	// new test
+	// setup
+	insertKeys(1)
+	// function under test
+	keyCount1, err := _rdb.CountKeys()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.Equal(t, 1, keyCount1, "key count should be 1")
+
+	_rdb.Clear()
+
+	// new test
+	// setup
+	insertKeys(2)
+	// function under test
+	keyCount2, err := _rdb.CountKeys()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.Equal(t, 2, keyCount2, "key count should be 2")
+
+	_rdb.Clear()
+
+	// new test
+	// setup
+	insertKeys(3)
+	// function under test
+	keyCount3, err := _rdb.CountKeys()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.Equal(t, 3, keyCount3, "key count should be 3")
+
+	_rdb.Clear()
+
+	// new test
+	// setup
+	insertKeys(4)
+	// function under test
+	keyCount4, err := _rdb.CountKeys()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	assert.Equal(t, 4, keyCount4, "key count should be 4")
+
+	_rdb.Clear()
 }

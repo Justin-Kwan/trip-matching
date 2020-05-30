@@ -1,9 +1,7 @@
 package internal
 
 import (
-	"log"
-
-	"github.com/pkg/errors"
+	// "github.com/pkg/errors"
   "order-matching/internal/order"
 )
 
@@ -14,6 +12,7 @@ type Db interface {
   Exists(keyId string) bool
   Clear() error
 }
+
 
 // type OrderManager interface {
 // 	AddOrder(consumerId string, params string) (string, error)
@@ -30,39 +29,46 @@ func NewOrderManager(db Db) *OrderManager {
 	}
 }
 
-// func (om *OrderManager) GetOrder(orderId string) (*Order, error) {
-// 	// how to auth?
+// tested
+func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
+	orderStr, err := om.db.Select(orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	order := &order.Order{}
+	order.UnmarshalJSON(orderStr)
+	return order, nil
+}
+
+// func (om *OrderManager) GetAllOrders() {
 //
-// 	orderStr, err := om.db.Select(orderId)
-// 	if err != nil {
-// 		return "", err
-// 	}
+// 	for
 //
-// 	order := &Order{}
-// 	order.UnmarshalJSON(orderStr)
-//
-// 	return order
 // }
 
-func (om *OrderManager) AddOrder(params string) (string, error) {
+func (om *OrderManager) GetOrderCount() {
+
+}
+
+// accepts order struct (deals with orders)
+func (om *OrderManager) AddNewOrder(order *order.Order) error {
   // order validation
   // - validate lon, lat
   // - validate price given > 0 and 2 decimal places (in schema definition? with minimum price)
 
-  // create order struct
-  order := order.NewOrder(params)
-
-	if om.db.Exists(order.Id) {
-		return "", errors.Errorf("Error, order with id '%s' already exists", order.Id)
-	}
-
-	orderBytes, err := order.MarshalJSON()
+	orderStr, err := order.MarshalJSON()
 	if err != nil {
-		return "", err
+		return err
 	}
+	return om.db.Insert(order.Id, orderStr)
+}
 
-	log.Printf("order str: %s", string(orderBytes))
+// func (om *OrderManager) OrderAccepted(orderId string) error {
+//
+// }
 
-  om.db.Insert(order.Id, string(orderBytes))
-  return order.Id, nil
+// tested
+func (om *OrderManager) OrderExists(orderId string) bool {
+	return om.db.Exists(orderId)
 }

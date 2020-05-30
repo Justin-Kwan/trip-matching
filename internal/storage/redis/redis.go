@@ -3,8 +3,8 @@ package redis
 import (
 	"time"
 
-  "github.com/pkg/errors"
 	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 
 	"order-matching/internal/config"
 )
@@ -14,6 +14,7 @@ type RedisDb struct {
 	pool   *redis.Pool
 }
 
+// need to add db num!!
 type RedisConfig struct {
 	exp          int
 	idleTimeout  int
@@ -114,12 +115,28 @@ func (rdb *RedisDb) Exists(keyId string) bool {
 	return exists
 }
 
-func (rdb *RedisDb) Clear() error {
-  conn := rdb.pool.Get()
-  defer conn.Close()
+func (rdb *RedisDb) CountKeys() (int, error) {
+	conn := rdb.pool.Get()
+	defer conn.Close()
 
-  if _, err := redis.Bool(conn.Do("FLUSHDb")); err != nil {
-    return errors.Errorf("Error clearing all key value pairs: %v", err)
-  }
-  return nil
+	keys := []string{}
+	arr, err := redis.Values(conn.Do("SCAN", nil))
+	if err != nil {
+		return 0, errors.Errorf("Error counting keys %v:", err)
+	}
+
+	k, _ := redis.Strings(arr[1], nil)
+	keys = append(keys, k...)
+
+	return len(keys), nil
+}
+
+func (rdb *RedisDb) Clear() error {
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	if _, err := redis.Bool(conn.Do("FLUSHDB")); err != nil {
+		return errors.Errorf("Error clearing all key value pairs: %v", err)
+	}
+	return nil
 }

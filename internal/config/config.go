@@ -23,7 +23,6 @@ type WsServerConfig struct {
 }
 
 type RedisConfig struct {
-	Exp          int    `yaml:"item_expiry"`
 	IdleTimeout  int    `yaml:idle_timeout"`
 	MaxIdle      int    `yaml:"max_idle_connections"`
 	MaxActive    int    `yaml:"max_active_connections"`

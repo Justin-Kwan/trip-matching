@@ -11,7 +11,6 @@ websocket_server:
   path:                   "/ws"
 
 redis_store:
-  item_expiry:            100000
   idle_timeout:           200
   max_idle_connections:   500
   max_active_connections: 1200

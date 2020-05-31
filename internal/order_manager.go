@@ -5,14 +5,14 @@ import (
   "order-matching/internal/order"
 )
 
-type Db interface {
+type KeyStore interface {
 	Select(keyId string) (string, error)
-	Insert(keyId string, value string) error
+	Insert(keyId string, val string) error
 	Delete(keyId string) error
   Exists(keyId string) bool
+	CountKeys() (int, error)
   Clear() error
 }
-
 
 // type OrderManager interface {
 // 	AddOrder(consumerId string, params string) (string, error)
@@ -20,12 +20,12 @@ type Db interface {
 // }
 
 type OrderManager struct {
-	db Db
+	db KeyStore
 }
 
-func NewOrderManager(db Db) *OrderManager {
+func NewOrderManager(ks KeyStore) *OrderManager {
 	return &OrderManager{
-		db: db,
+		db: ks,
 	}
 }
 
@@ -41,14 +41,8 @@ func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
 	return order, nil
 }
 
-// func (om *OrderManager) GetAllOrders() {
-//
-// 	for
-//
-// }
-
-func (om *OrderManager) GetOrderCount() {
-
+func (om *OrderManager) CountOrders() (int, error) {
+	return om.db.CountKeys()
 }
 
 // accepts order struct (deals with orders)
@@ -61,6 +55,9 @@ func (om *OrderManager) AddNewOrder(order *order.Order) error {
 	if err != nil {
 		return err
 	}
+
+
+
 	return om.db.Insert(order.Id, orderStr)
 }
 

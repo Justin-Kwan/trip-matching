@@ -5,3 +5,6 @@ go run main.go -GO_ENV test
 
 # test recursively
 go test ./...
+
+# show all keys in sorted set
+zrangebyscore "sorted set index" -inf +inf

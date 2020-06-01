@@ -105,8 +105,8 @@ func TestMain(m *testing.M) {
 func beforeAll() {
 	testCfg, _ := config.NewConfig(_configFilePath, _env)
 	testRedisCfg := &(*testCfg).Redis
-	rdb, _ := NewRedisDb(testRedisCfg)
-	_rgs = NewRedisGeoStore(rdb, _dbNum, _index)
+	redisPool, _ := NewPool(testRedisCfg)
+	_rgs = NewGeoStore(redisPool, _dbNum, _index)
 }
 
 func afterAll() {
@@ -130,13 +130,25 @@ func TestInsert(t *testing.T) {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
 		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
 	}
 }
 
-// func TestSelect(t *testing.T) {}
+func TestSelect(t *testing.T) {
+	// assert errors when selecting non-existent keys
+	_, err := _rgs.Select("non_existent_key")
+	assert.EqualError(t, err, "Error selecting POI with key 'non_existent_key'")
+
+	_, err = _rgs.Select(" ")
+	assert.EqualError(t, err, "Error selecting POI with key ' '")
+
+	_, err = _rgs.Select("")
+	assert.EqualError(t, err, "Error selecting POI with key ''")
+
+	_, err = _rgs.Select("%")
+	assert.EqualError(t, err, "Error selecting POI with key '%'")
+}
 
 func TestDelete(t *testing.T) {
 	for _, testPOI := range testPOIs {
@@ -150,7 +162,6 @@ func TestDelete(t *testing.T) {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
 		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
 

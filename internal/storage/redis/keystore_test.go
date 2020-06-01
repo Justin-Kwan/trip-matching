@@ -60,8 +60,8 @@ func TestKeyStore(t *testing.T) {
 		g.Before(func() {
 			testCfg, _ := config.NewConfig(configFilePath, env)
 			testRedisCfg := &(*testCfg).Redis
-			rdb, _ := NewRedisDb(testRedisCfg)
-			rks = NewRedisKeyStore(rdb, dbNum)
+			redisPool, _ := NewPool(testRedisCfg)
+			rks = NewKeyStore(redisPool, dbNum)
 			rks.Clear()
 		})
 
@@ -152,14 +152,22 @@ func TestKeyStore(t *testing.T) {
 					log.Fatal(err.Error())
 				}
 				// setup assertion
-				g.Assert(rks.Exists(_testKey1)).Equal(true)
+				keyExists, err := rks.Exists(_testKey1)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 				// function under test
-				err := rks.Delete(_testKey1)
+				err = rks.Delete(_testKey1)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
 				// final assertion
-				g.Assert(rks.Exists(_testKey1)).Equal(false)
+				keyExists, err = rks.Exists(_testKey1)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(false)
 			})
 
 			g.It("should assert deleted key value pair does not exist", func() {
@@ -168,14 +176,22 @@ func TestKeyStore(t *testing.T) {
 					log.Fatal(err.Error())
 				}
 				// setup assertion
-				g.Assert(rks.Exists(_testKey2)).Equal(true)
+				keyExists, err := rks.Exists(_testKey2)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 				// function under test
-				err := rks.Delete(_testKey2)
+				err = rks.Delete(_testKey2)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				keyExists, err = rks.Exists(_testKey2)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
 				// final assertion
-				g.Assert(rks.Exists(_testKey2)).Equal(false)
+				g.Assert(keyExists).Equal(false)
 			})
 
 			g.It("should assert deleted key value pair does not exist", func() {
@@ -184,14 +200,22 @@ func TestKeyStore(t *testing.T) {
 					log.Fatal(err.Error())
 				}
 				// setup assertion
-				g.Assert(rks.Exists(_testKey3)).Equal(true)
+				keyExists, err := rks.Exists(_testKey3)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 				// function under test
-				err := rks.Delete(_testKey3)
+				err = rks.Delete(_testKey3)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
 				// final assertion
-				g.Assert(rks.Exists(_testKey3)).Equal(false)
+				keyExists, err = rks.Exists(_testKey3)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(false)
 			})
 
 			g.It("should assert deleted key value pair does not exist", func() {
@@ -200,21 +224,33 @@ func TestKeyStore(t *testing.T) {
 					log.Fatal(err.Error())
 				}
 				// setup assertion
-				g.Assert(rks.Exists(_testKey4)).Equal(true)
+				keyExists, err := rks.Exists(_testKey4)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 				// function under test
-				err := rks.Delete(_testKey4)
+				err = rks.Delete(_testKey4)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
 				// final assertion
-				g.Assert(rks.Exists(_testKey4)).Equal(false)
+				keyExists, err = rks.Exists(_testKey4)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(false)
 			})
 		})
 
 		g.Describe("Exists() Tests", func() {
 			g.It("should assert non-existent key does not exist", func() {
 				// function under test
-				g.Assert(rks.Exists("non_existent_key")).Equal(false)
+				keyExists, err := rks.Exists("non_existent_key")
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(false)
 			})
 
 			g.It("inserted key value pair should exist", func() {
@@ -222,7 +258,11 @@ func TestKeyStore(t *testing.T) {
 				if err := rks.Insert(_testKey1, _testVal1); err != nil {
 					log.Fatal(err.Error())
 				}
-				g.Assert(rks.Exists(_testKey1)).Equal(true)
+				keyExists, err := rks.Exists(_testKey1)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 			})
 
 			g.It("inserted key value pair should exist", func() {
@@ -230,7 +270,11 @@ func TestKeyStore(t *testing.T) {
 				if err := rks.Insert(_testKey2, _testVal2); err != nil {
 					log.Fatal(err.Error())
 				}
-				g.Assert(rks.Exists(_testKey2)).Equal(true)
+				keyExists, err := rks.Exists(_testKey2)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 			})
 
 			g.It("inserted key value pair should exist", func() {
@@ -238,7 +282,11 @@ func TestKeyStore(t *testing.T) {
 				if err := rks.Insert(_testKey3, _testVal3); err != nil {
 					log.Fatal(err.Error())
 				}
-				g.Assert(rks.Exists(_testKey3)).Equal(true)
+				keyExists, err := rks.Exists(_testKey3)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 			})
 
 			g.It("inserted key value pair should exist", func() {
@@ -246,7 +294,11 @@ func TestKeyStore(t *testing.T) {
 				if err := rks.Insert(_testKey4, _testVal4); err != nil {
 					log.Fatal(err.Error())
 				}
-				g.Assert(rks.Exists(_testKey4)).Equal(true)
+				keyExists, err := rks.Exists(_testKey4)
+				if err != nil {
+					log.Fatalf(err.Error())
+				}
+				g.Assert(keyExists).Equal(true)
 			})
 		})
 

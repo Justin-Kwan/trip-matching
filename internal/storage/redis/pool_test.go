@@ -32,12 +32,3 @@ func TestRedis(t *testing.T) {
 
 	})
 }
-
-// func TestInsertPOI(t *testing.T) {
-// 	rdb.InsertPOI("keascsacascsay", 4.555, 9.13123)
-// 	lat, lon, err := rdb.SelectPOI("keascsacascsay")
-// 	if err != nil {
-// 		log.Fatalf(err.Error())
-// 	}
-// 	t.Logf("lon: %v, lat: %v", lon, lat)
-// }

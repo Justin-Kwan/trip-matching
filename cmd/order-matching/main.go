@@ -12,10 +12,6 @@ const (
 	_configFilePath = "../../"
 )
 
-func initRedis() {
-
-}
-
 func main() {
 	env, err := config.ParseEnvFlag()
 	if err != nil {
@@ -35,8 +31,8 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	/*rks := */redis.NewKeyStore(redisPool, 0)
-	/*rgs := */redis.NewGeoStore(redisPool, 1, "index")
+	/*rks := */redis.NewKeyDB(redisPool, 0)
+	/*rgs := */redis.NewGeoDB(redisPool, 1, "index")
 
 	log.Printf("Redis connection pool initialized...")
 

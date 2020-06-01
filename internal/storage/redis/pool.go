@@ -8,11 +8,6 @@ import (
 	"order-matching/internal/config"
 )
 
-// type RedisDb struct {
-// 	config *RedisConfig
-// 	pool   *redis.Pool
-// }
-
 type PoolConfig struct {
 	addr            string
 	password        string
@@ -21,7 +16,6 @@ type PoolConfig struct {
 	maxIdleConn     int
 	maxActiveConn   int
 
-	// ActiveConn   int    `json:"active_conn"`
 	// DB           int    `json:"db"`
 	// TobTimeout   string `json:"tob_timeout"`
 	// ConnTimeout  string `json:"conn_timeout"`

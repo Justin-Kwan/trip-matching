@@ -3,30 +3,28 @@ package redis
 import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
-	// "order-matching/internal/config"
 )
 
-type RedisGeoStore struct {
+type GeoDB struct {
 	pool     *redis.Pool
 	dbNum    int
 	index    string
-	distUnit string
 }
 
-func NewGeoStore(pool *redis.Pool, dbNum int, index string) *RedisGeoStore {
-	return &RedisGeoStore{
+func NewGeoDB(pool *redis.Pool, dbNum int, index string) *GeoDB {
+	return &GeoDB{
 		pool:  pool,
 		dbNum: dbNum,
 		index: index,
 	}
 }
 
-func (rgs *RedisGeoStore) Insert(keyId string, coord map[string]float64) error {
-	conn := rgs.pool.Get()
-	conn.Do("SELECT", rgs.dbNum)
+func (g *GeoDB) Insert(keyId string, coord map[string]float64) error {
+	conn := g.pool.Get()
+	conn.Do("SELECT", g.dbNum)
 	defer conn.Close()
 
-	_, err := conn.Do("GEOADD", rgs.index, coord["lon"], coord["lat"], keyId)
+	_, err := conn.Do("GEOADD", g.index, coord["lon"], coord["lat"], keyId)
 	if err != nil {
 		return errors.Errorf("Error adding POI with key '%s': %v", keyId, err)
 	}
@@ -34,12 +32,12 @@ func (rgs *RedisGeoStore) Insert(keyId string, coord map[string]float64) error {
 	return nil
 }
 
-func (rgs *RedisGeoStore) Select(keyId string) (map[string]float64, error) {
-	conn := rgs.pool.Get()
-	conn.Do("SELECT", rgs.dbNum)
+func (g *GeoDB) Select(keyId string) (map[string]float64, error) {
+	conn := g.pool.Get()
+	conn.Do("SELECT", g.dbNum)
 	defer conn.Close()
 
-	val, err := redis.Positions(conn.Do("GEOPOS", rgs.index, keyId))
+	val, err := redis.Positions(conn.Do("GEOPOS", g.index, keyId))
 	if err != nil || val[0] == nil {
 		return nil, errors.Errorf("Error selecting POI with key '%s'", keyId)
 	}
@@ -52,13 +50,13 @@ func (rgs *RedisGeoStore) Select(keyId string) (map[string]float64, error) {
 	return coord, nil
 }
 
-// func (rgs *RedisGeoStore) SelectAllInRadius(coords map[string]float64, radius float64) ? {
-// 	conn := rgs.pool.Get()
+// func (g *GeoDB) SelectAllInRadius(coords map[string]float64, radius float64) ? {
+// 	conn := g.pool.Get()
 // 	defer conn.Close()
 //
 // 	_, err := conn.Do(
 // 		"GEORADIUS",
-// 		rgs.index,
+// 		g.index,
 // 		coords["lon"],
 // 		coords["lat"],
 // 		radius,
@@ -71,21 +69,21 @@ func (rgs *RedisGeoStore) Select(keyId string) (map[string]float64, error) {
 // 	return val, nil
 // }
 
-func (rgs *RedisGeoStore) Delete(keyId string) error {
-	conn := rgs.pool.Get()
-	conn.Do("SELECT", rgs.dbNum)
+func (g *GeoDB) Delete(keyId string) error {
+	conn := g.pool.Get()
+	conn.Do("SELECT", g.dbNum)
 	defer conn.Close()
 
-	if _, err := conn.Do("ZREM", rgs.index, keyId); err != nil {
+	if _, err := conn.Do("ZREM", g.index, keyId); err != nil {
 		return errors.Errorf("Error deleting key %s: %v", keyId, err)
 	}
 
 	return nil
 }
 
-func (rgs *RedisGeoStore) Clear() error {
-	conn := rgs.pool.Get()
-	conn.Do("SELECT", rgs.dbNum)
+func (g *GeoDB) Clear() error {
+	conn := g.pool.Get()
+	conn.Do("SELECT", g.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {

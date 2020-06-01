@@ -6,21 +6,21 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-type RedisKeyStore struct {
+type KeyDB struct {
 	pool	*redis.Pool
 	dbNum int
 }
 
-func NewKeyStore(pool *redis.Pool, dbNum int) *RedisKeyStore {
-	return &RedisKeyStore{
+func NewKeyDB(pool *redis.Pool, dbNum int) *KeyDB {
+	return &KeyDB{
 		pool:  pool,
 		dbNum: dbNum,
 	}
 }
 
-func (rks *RedisKeyStore) Select(keyId string) (string, error) {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) Select(keyId string) (string, error) {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	val, err := redis.String(conn.Do("GET", keyId))
@@ -31,9 +31,9 @@ func (rks *RedisKeyStore) Select(keyId string) (string, error) {
 	return val, nil
 }
 
-func (rks *RedisKeyStore) Insert(keyId, val string) error {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) Insert(keyId, val string) error {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("SET", keyId, val); err != nil {
@@ -43,9 +43,9 @@ func (rks *RedisKeyStore) Insert(keyId, val string) error {
 	return nil
 }
 
-func (rks *RedisKeyStore) Delete(keyId string) error {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) Delete(keyId string) error {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("DEL", keyId); err != nil {
@@ -55,9 +55,9 @@ func (rks *RedisKeyStore) Delete(keyId string) error {
 	return nil
 }
 
-func (rks *RedisKeyStore) Exists(keyId string) (bool, error) {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) Exists(keyId string) (bool, error) {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	keyExists, err := redis.Bool(conn.Do("EXISTS", keyId))
@@ -68,9 +68,9 @@ func (rks *RedisKeyStore) Exists(keyId string) (bool, error) {
 	return keyExists, nil
 }
 
-func (rks *RedisKeyStore) CountKeys() (int, error) {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) CountKeys() (int, error) {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	val, err := redis.Values(conn.Do("SCAN", nil))
@@ -82,9 +82,9 @@ func (rks *RedisKeyStore) CountKeys() (int, error) {
 	return len(keys), nil
 }
 
-func (rks *RedisKeyStore) Clear() error {
-	conn := rks.pool.Get()
-  conn.Do("SELECT", rks.dbNum)
+func (k *KeyDB) Clear() error {
+	conn := k.pool.Get()
+  conn.Do("SELECT", k.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {

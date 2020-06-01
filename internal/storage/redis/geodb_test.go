@@ -2,7 +2,6 @@ package redis
 
 import (
 	"log"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,19 +9,13 @@ import (
 	"order-matching/internal/config"
 )
 
-var (
-	_rgs *RedisGeoStore
-)
-
 const (
-	_env            = "test"
-	_configFilePath = "../../../"
-	_dbNum          = 1
-	_index					= "test_index"
-	_floatMaxDelta  = 0.01001
+	_floatMaxDelta = 0.01001
 )
 
 var (
+	_geoDB *GeoDB
+
 	// test points of interest
 	testPOIs = []TestPOI{
 		TestPOI{
@@ -95,38 +88,39 @@ var (
 	}
 )
 
-func TestMain(m *testing.M) {
-	beforeAll()
-	code := m.Run()
-	afterAll()
-	os.Exit(code)
-}
-
-func beforeAll() {
-	testCfg, _ := config.NewConfig(_configFilePath, _env)
-	testRedisCfg := &(*testCfg).Redis
-	redisPool, _ := NewPool(testRedisCfg)
-	_rgs = NewGeoStore(redisPool, _dbNum, _index)
-}
-
-func afterAll() {
-	_rgs.Clear()
-}
-
 type TestPOI struct {
 	id    string
 	coord map[string]float64
 }
 
+func setupGeoDBTests() func() {
+	configFilePath := "../../../"
+	env := "test"
+	dbNum := 1
+	setIndex := "test_index"
+
+	testCfg, _ := config.NewConfig(configFilePath, env)
+	testRedisCfg := &(*testCfg).Redis
+	redisPool, _ := NewPool(testRedisCfg)
+	_geoDB = NewGeoDB(redisPool, dbNum, setIndex)
+
+	return func() {
+		_geoDB.Clear()
+	}
+}
+
 func TestInsert(t *testing.T) {
+	teardownGeoDBTests := setupGeoDBTests()
+	defer teardownGeoDBTests()
+
 	for _, testPOI := range testPOIs {
 		// function under test
-		if err := _rgs.Insert(testPOI.id, testPOI.coord); err != nil {
+		if err := _geoDB.Insert(testPOI.id, testPOI.coord); err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		// select and assert point of interest exists
-		coord, err := _rgs.Select(testPOI.id)
+		coord, err := _geoDB.Select(testPOI.id)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
@@ -136,29 +130,35 @@ func TestInsert(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
+	teardownGeoDBTests := setupGeoDBTests()
+	defer teardownGeoDBTests()
+
 	// assert errors when selecting non-existent keys
-	_, err := _rgs.Select("non_existent_key")
+	_, err := _geoDB.Select("non_existent_key")
 	assert.EqualError(t, err, "Error selecting POI with key 'non_existent_key'")
 
-	_, err = _rgs.Select(" ")
+	_, err = _geoDB.Select(" ")
 	assert.EqualError(t, err, "Error selecting POI with key ' '")
 
-	_, err = _rgs.Select("")
+	_, err = _geoDB.Select("")
 	assert.EqualError(t, err, "Error selecting POI with key ''")
 
-	_, err = _rgs.Select("%")
+	_, err = _geoDB.Select("%")
 	assert.EqualError(t, err, "Error selecting POI with key '%'")
 }
 
 func TestDelete(t *testing.T) {
+	teardownGeoDBTests := setupGeoDBTests()
+	defer teardownGeoDBTests()
+
 	for _, testPOI := range testPOIs {
 		// setup
-		if err := _rgs.Insert(testPOI.id, testPOI.coord); err != nil {
+		if err := _geoDB.Insert(testPOI.id, testPOI.coord); err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		// select and assert point of interest exists before deleting
-		coord, err := _rgs.Select(testPOI.id)
+		coord, err := _geoDB.Select(testPOI.id)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
@@ -166,12 +166,12 @@ func TestDelete(t *testing.T) {
 		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
 
 		// function under test
-		if err := _rgs.Delete(testPOI.id); err != nil {
+		if err := _geoDB.Delete(testPOI.id); err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		// assert point of interest is deleted
-		coord, err = _rgs.Select(testPOI.id)
-		assert.EqualError(t, err, "Error selecting POI with key '" + testPOI.id + "'")
+		coord, err = _geoDB.Select(testPOI.id)
+		assert.EqualError(t, err, "Error selecting POI with key '"+testPOI.id+"'")
 	}
 }

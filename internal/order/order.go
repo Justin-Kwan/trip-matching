@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
-	"github.com/buger/jsonparser"
 )
 
 type Order struct {
@@ -51,14 +51,14 @@ func (o *Order) MarshalJSON() (string, error) {
 }
 
 func (o *Order) UnmarshalJSON(orderStr string) error {
-  // define new type locally to avoid recursion
-  type OrderCopy Order
-  var oCopy OrderCopy
+	// define new type locally to avoid recursion
+	type OrderCopy Order
+	var oCopy OrderCopy
 
 	if err := json.Unmarshal([]byte(orderStr), &oCopy); err != nil {
 		return errors.Errorf("Error unmarshalling to order struct: %v", err)
 	}
-  // cast back to Order struct type and assign to current Order struct
-  *o = Order(oCopy)
+	// cast back to Order struct type and assign to current Order struct
+	*o = Order(oCopy)
 	return nil
 }

@@ -55,7 +55,7 @@ func validEnvFlag(env string) bool {
 // the websocket and rest server. The specific yaml config file
 // parsed into the struct depends on the runtime environment flag
 // passed in the command line. The file path is relative to the caller.
-func NewConfig(filePath string, env string) (*Config, error) {
+func NewConfig(filePath, env string) (*Config, error) {
 	yamlData, err := loadConfigFile(filePath, fileName(env))
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func fileName(env string) string {
 
 // Loads and parses a yaml file given the file path and file name.
 // Then returns the parsed yaml data in a byte array.
-func loadConfigFile(filePath string, fileName string) ([]byte, error) {
+func loadConfigFile(filePath, fileName string) ([]byte, error) {
 	yamlData, err := ioutil.ReadFile(filePath + fileName)
 	if err != nil {
 		return nil, errors.Errorf("Error opening file '%s': %v", fileName, err)

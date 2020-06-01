@@ -24,11 +24,6 @@ type RedisConfig struct {
 	connProtocol string
 }
 
-type KeyQuery struct {
-	keyId string
-	val   string
-}
-
 func NewRedisDb(redisCfg *config.RedisConfig) (*RedisDb, error) {
 	rdb := &RedisDb{}
 	rdb.config = setConfig(redisCfg)

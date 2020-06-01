@@ -15,9 +15,9 @@ const (
 	_testOrderParamStr3 = `{"location":{"lon":0,"lat":0},"description":"","consumerId":"","bidPrice":0}`
 
 	// test order json payloads to marshal to order structs
-	_testOrderStr1 = `{"location":{"lon":1.23,"lat":1.63},"id":"test_order_id1","description":"test_order_description1","timeRequested":"test_order_time_requested1","duration":"test_order_duration1","consumerId":"test_order_consumer_id1","bidPrice":1.234}`
-	_testOrderStr2 = `{"location":{"lon":2.23,"lat":2.43},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":1.236}`
-	_testOrderStr3 = `{"location":{"lon":0,"lat":0},"id":"","description":"","timeRequested":"","duration":"","consumerId":"","bidPrice":0}`
+	_testOrderStr1    = `{"location":{"lon":1.23,"lat":1.63},"id":"test_order_id1","description":"test_order_description1","timeRequested":"test_order_time_requested1","duration":"test_order_duration1","consumerId":"test_order_consumer_id1","bidPrice":1.234}`
+	_testOrderStr2    = `{"location":{"lon":2.23,"lat":2.43},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":1.236}`
+	_testOrderStr3    = `{"location":{"lon":0,"lat":0},"id":"","description":"","timeRequested":"","duration":"","consumerId":"","bidPrice":0}`
 	_testBadOrderStr4 = `{"location":{"lon": "should not be a string","lat":0},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":654.2312451232}`
 	_testBadOrderStr5 = `{"location":{"lon":123,"lat":234},"id":"test_order_id2","description":"test_order_description2","timeRequested":"test_order_time_requested2","duration":"test_order_duration2","consumerId":"test_order_consumer_id2","bidPrice":"should not be a string"}`
 )

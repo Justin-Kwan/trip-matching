@@ -30,12 +30,12 @@ func (rks *RedisKeyStore) Select(keyId string) (string, error) {
 	return val, nil
 }
 
-func (rks *RedisKeyStore) Insert(keyId string, val string, exp int) error {
+func (rks *RedisKeyStore) Insert(keyId, val string) error {
 	conn := rks.db.pool.Get()
   conn.Do("SELECT", rks.dbNum)
 	defer conn.Close()
 
-	if _, err := conn.Do("SETEX", keyId, val, exp); err != nil {
+	if _, err := conn.Do("SET", keyId, val); err != nil {
 		return errors.Errorf("Error setting key '%s': %v", keyId, err)
 	}
 	return nil
@@ -52,12 +52,15 @@ func (rks *RedisKeyStore) Delete(keyId string) error {
 	return nil
 }
 
-func (rks *RedisKeyStore) Exists(keyId string) bool {
+func (rks *RedisKeyStore) Exists(keyId string) (bool, error) {
 	conn := rks.db.pool.Get()
   conn.Do("SELECT", rks.dbNum)
 	defer conn.Close()
 
-	exists, _ := redis.Bool(conn.Do("EXISTS", keyId))
+	exists, err := redis.Bool(conn.Do("EXISTS", keyId))
+	if err != nil {
+		return errors.Errorf("Error checking key '%s' exists: %v", keyId, err)
+	}
 	return exists
 }
 
@@ -74,6 +77,7 @@ func (rks *RedisKeyStore) CountKeys() (int, error) {
 
 	k, _ := redis.Strings(arr[1], nil)
 	keys = append(keys, k...)
+
 	return len(keys), nil
 }
 
@@ -82,6 +86,7 @@ func (rks *RedisKeyStore) Clear() error {
   conn.Do("SELECT", rks.dbNum)
 	defer conn.Close()
 
+	// why bool?
 	if _, err := redis.Bool(conn.Do("FLUSHDB")); err != nil {
 		return errors.Errorf("Error clearing all key value pairs: %v", err)
 	}

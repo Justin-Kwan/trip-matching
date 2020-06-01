@@ -1,52 +1,166 @@
 package redis
 
 import (
-	// "log"
+	"log"
+	"os"
 	"testing"
 
-	. "github.com/franela/goblin"
-	// "github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 
 	"order-matching/internal/config"
 )
 
-func TestGeoStore(t *testing.T) {
-  g := Goblin(t)
+var (
+	_rgs *RedisGeoStore
+)
 
-  env := "test"
-  configFilePath := "../../../"
-  dbNum := 0
+const (
+	_env            = "test"
+	_configFilePath = "../../../"
+	_dbNum          = 1
+	_index					= "test_index"
+	_floatMaxDelta  = 0.01001
+)
 
-  var rgs *RedisGeoStore
+var (
+	// test points of interest
+	testPOIs = []TestPOI{
+		TestPOI{
+			id: "test_id1",
+			coord: map[string]float64{
+				"lon": 1,
+				"lat": 2,
+			},
+		},
+		TestPOI{
+			id: "test_id2",
+			coord: map[string]float64{
+				"lon": 3.141878,
+				"lat": 5.123,
+			},
+		},
+		// edge case (max lon and max lat)
+		TestPOI{
+			id: "test_id3",
+			coord: map[string]float64{
+				"lon": 180,
+				"lat": 85.05112878,
+			},
+		},
+		// edge case (min lon and min lat)
+		TestPOI{
+			id: "test_id4",
+			coord: map[string]float64{
+				"lon": -180,
+				"lat": -85.05112878,
+			},
+		},
+		// edge case (max lon and min lat)
+		TestPOI{
+			id: "test_id5",
+			coord: map[string]float64{
+				"lon": 180,
+				"lat": -85.05112878,
+			},
+		},
+		// edge case (min lon and max lat)
+		TestPOI{
+			id: "test_id6",
+			coord: map[string]float64{
+				"lon": -180,
+				"lat": 85.05112878,
+			},
+		},
+		TestPOI{
+			id: "test_id7",
+			coord: map[string]float64{
+				"lon": 0,
+				"lat": 0,
+			},
+		},
+		TestPOI{
+			id: "test_id8",
+			coord: map[string]float64{
+				"lon": 45.12321,
+				"lat": 32.124,
+			},
+		},
+		TestPOI{
+			id: "test_id9",
+			coord: map[string]float64{
+				"lon": 75.987567,
+				"lat": 67.124122124,
+			},
+		},
+	}
+)
 
-  g.Describe("keystore.go tests", func() {
+func TestMain(m *testing.M) {
+	beforeAll()
+	code := m.Run()
+	afterAll()
+	os.Exit(code)
+}
 
-    g.Before(func() {
-      testCfg, _ := config.NewConfig(configFilePath, env)
-      testRedisCfg := &(*testCfg).Redis
-      rdb, _ := NewRedisDb(testRedisCfg)
-      rgs = NewRedisGeoStore(rdb, dbNum)
-      rgs.Clear()
-    })
+func beforeAll() {
+	testCfg, _ := config.NewConfig(_configFilePath, _env)
+	testRedisCfg := &(*testCfg).Redis
+	rdb, _ := NewRedisDb(testRedisCfg)
+	_rgs = NewRedisGeoStore(rdb, _dbNum, _index)
+}
 
-    g.AfterEach(func() {
+func afterAll() {
+	_rgs.Clear()
+}
 
-    })
+type TestPOI struct {
+	id    string
+	coord map[string]float64
+}
 
-    g.Describe("Insert() Tests", func() {
+func TestInsert(t *testing.T) {
+	for _, testPOI := range testPOIs {
+		// function under test
+		if err := _rgs.Insert(testPOI.id, testPOI.coord); err != nil {
+			log.Fatalf(err.Error())
+		}
 
-      g.It("should insert a key with a small value", func() {
-        geoQuery := &GeoQuery{
-          keyId: "id",
-          lon: 99.2,
-          lat: 12.21313,
-        }
+		// select and assert point of interest exists
+		coord, err := _rgs.Select(testPOI.id)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 
-        rgs.Insert(geoQuery)
-      })
+		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
+		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
+	}
+}
 
-    })
+// func TestSelect(t *testing.T) {}
 
-  })
+func TestDelete(t *testing.T) {
+	for _, testPOI := range testPOIs {
+		// setup
+		if err := _rgs.Insert(testPOI.id, testPOI.coord); err != nil {
+			log.Fatalf(err.Error())
+		}
 
+		// select and assert point of interest exists before deleting
+		coord, err := _rgs.Select(testPOI.id)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
+		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
+
+		// function under test
+		if err := _rgs.Delete(testPOI.id); err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		// assert point of interest is deleted
+		coord, err = _rgs.Select(testPOI.id)
+		assert.EqualError(t, err, "Error selecting POI with key '" + testPOI.id + "'")
+	}
 }

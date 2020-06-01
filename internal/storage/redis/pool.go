@@ -15,12 +15,6 @@ type PoolConfig struct {
 	idleConnTimeout int
 	maxIdleConn     int
 	maxActiveConn   int
-
-	// DB           int    `json:"db"`
-	// TobTimeout   string `json:"tob_timeout"`
-	// ConnTimeout  string `json:"conn_timeout"`
-	// ReadTimeout  string `json:"read_timeout"`
-	// WriteTimeout string `json:"write_timeout"`
 }
 
 func NewPool(redisCfg *config.RedisConfig) (*redis.Pool, error) {

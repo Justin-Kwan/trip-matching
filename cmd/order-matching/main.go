@@ -31,8 +31,8 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	/*rks := */redis.NewKeyDB(redisPool, 0)
-	/*rgs := */redis.NewGeoDB(redisPool, 1, "index")
+	/*keyDB := */redis.NewKeyDB(redisPool, 0)
+	/*geoDB := */redis.NewGeoDB(redisPool, 1, "index")
 
 	log.Printf("Redis connection pool initialized...")
 

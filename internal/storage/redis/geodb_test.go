@@ -93,16 +93,30 @@ type TestPOI struct {
 	coord map[string]float64
 }
 
-func setupGeoDBTests() func() {
-	configFilePath := "../../../"
-	env := "test"
-	dbNum := 1
-	setIndex := "test_index"
+type geoDBTestConstants struct {
+	configFilePath string
+	env            string
+	dbNum          int
+	setIndex       string
+}
 
-	testCfg, _ := config.NewConfig(configFilePath, env)
+func newGeoDBTestConstants() *geoDBTestConstants {
+	return &geoDBTestConstants{
+		configFilePath: "../../../",
+		env:            "test",
+		dbNum:          1,
+		setIndex:       "test_index",
+	}
+}
+
+func setupGeoDBTests() func() {
+	tc := newGeoDBTestConstants()
+
+	testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
 	testRedisCfg := &(*testCfg).Redis
 	redisPool, _ := NewPool(testRedisCfg)
-	_geoDB = NewGeoDB(redisPool, dbNum, setIndex)
+
+	_geoDB = NewGeoDB(redisPool, tc.dbNum, tc.setIndex)
 
 	return func() {
 		_geoDB.Clear()
@@ -124,6 +138,7 @@ func TestInsert(t *testing.T) {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
+
 		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
 		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
 	}
@@ -162,6 +177,7 @@ func TestDelete(t *testing.T) {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
+		
 		assert.InDelta(t, testPOI.coord["lon"], coord["lon"], _floatMaxDelta)
 		assert.InDelta(t, testPOI.coord["lat"], coord["lat"], _floatMaxDelta)
 

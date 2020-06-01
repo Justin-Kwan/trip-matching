@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// test constants
+	// test case constants
 	_testKey1 = "test_key1"
 	_testVal1 = "test_value1"
 	_testKey2 = "test_key2"
@@ -40,6 +40,21 @@ const (
 	_testVal4 = ""
 )
 
+type keyDBTestConstants struct {
+	configFilePath string
+	env            string
+	dbNum          int
+	setIndex       string
+}
+
+func newKeyDBTestConstants() *keyDBTestConstants {
+	return &keyDBTestConstants{
+		configFilePath: "../../../",
+		env:            "test",
+		dbNum:          0,
+	}
+}
+
 func insertKeys(keyCount int, keyDB *KeyDB) {
 	for i := 0; i < keyCount; i++ {
 		keyDB.Insert(strconv.Itoa(i), "test_value")
@@ -49,19 +64,17 @@ func insertKeys(keyCount int, keyDB *KeyDB) {
 func TestKeyDB(t *testing.T) {
 	g := Goblin(t)
 
-	env := "test"
-	configFilePath := "../../../"
-	dbNum := 0
+	tc := newKeyDBTestConstants()
 
 	var keyDB *KeyDB
 
 	g.Describe("keystore.go tests", func() {
 
 		g.Before(func() {
-			testCfg, _ := config.NewConfig(configFilePath, env)
+			testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
 			testRedisCfg := &(*testCfg).Redis
 			redisPool, _ := NewPool(testRedisCfg)
-			keyDB = NewKeyDB(redisPool, dbNum)
+			keyDB = NewKeyDB(redisPool, tc.dbNum)
 			keyDB.Clear()
 		})
 

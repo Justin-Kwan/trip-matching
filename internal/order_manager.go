@@ -5,33 +5,37 @@ import (
   "order-matching/internal/order"
 )
 
-type KeyStore interface {
+type KeyDB interface {
+  Insert(keyId string, val string) error
 	Select(keyId string) (string, error)
-	Insert(keyId string, val string) error
 	Delete(keyId string) error
-  Exists(keyId string) bool
+  Exists(keyId string) (bool, error)
 	CountKeys() (int, error)
   Clear() error
 }
 
-// type OrderManager interface {
-// 	AddOrder(consumerId string, params string) (string, error)
-// 	// IsOrderAccepted(string) (bool, error)
-// }
-
-type OrderManager struct {
-	db KeyStore
+type GeoDB interface {
+  Insert(keyId string, coord map[string]float64) error
+  Select(keyId string) (map[string]float64, error)
+	Delete(keyId string) error
+  Clear() error
 }
 
-func NewOrderManager(ks KeyStore) *OrderManager {
+type OrderManager struct {
+	keyDB KeyDB
+  geoDB GeoDB
+}
+
+func NewOrderManager(keyDB KeyDB, geoDB GeoDB) *OrderManager {
 	return &OrderManager{
-		db: ks,
+		keyDB: keyDB,
+    geoDB: geoDB,
 	}
 }
 
 // tested
 func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
-	orderStr, err := om.db.Select(orderId)
+	orderStr, err := om.keyDB.Select(orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -42,10 +46,9 @@ func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
 }
 
 func (om *OrderManager) CountOrders() (int, error) {
-	return om.db.CountKeys()
+	return om.keyDB.CountKeys()
 }
 
-// accepts order struct (deals with orders)
 func (om *OrderManager) AddNewOrder(order *order.Order) error {
   // order validation
   // - validate lon, lat
@@ -56,9 +59,7 @@ func (om *OrderManager) AddNewOrder(order *order.Order) error {
 		return err
 	}
 
-
-
-	return om.db.Insert(order.Id, orderStr)
+	return om.keyDB.Insert(order.Id, orderStr)
 }
 
 // func (om *OrderManager) OrderAccepted(orderId string) error {
@@ -66,6 +67,13 @@ func (om *OrderManager) AddNewOrder(order *order.Order) error {
 // }
 
 // tested
-func (om *OrderManager) OrderExists(orderId string) bool {
-	return om.db.Exists(orderId)
+func (om *OrderManager) OrderExists(orderId string) (bool, error) {
+	return om.keyDB.Exists(orderId)
+}
+
+func (om *OrderManager) Clear() error {
+  if err := om.keyDB.Clear(); err != nil {
+    return err
+  }
+  return om.geoDB.Clear()
 }

@@ -19,12 +19,12 @@ func NewGeoDB(pool *redis.Pool, dbNum int, index string) *GeoDB {
 	}
 }
 
-func (g *GeoDB) Insert(keyId string, coord map[string]float64) error {
-	conn := g.pool.Get()
-	conn.Do("SELECT", g.dbNum)
+func (db *GeoDB) Insert(keyId string, coord map[string]float64) error {
+	conn := db.pool.Get()
+	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	_, err := conn.Do("GEOADD", g.index, coord["lon"], coord["lat"], keyId)
+	_, err := conn.Do("GEOADD", db.index, coord["lon"], coord["lat"], keyId)
 	if err != nil {
 		return errors.Errorf("Error adding POI with key '%s': %v", keyId, err)
 	}
@@ -32,12 +32,12 @@ func (g *GeoDB) Insert(keyId string, coord map[string]float64) error {
 	return nil
 }
 
-func (g *GeoDB) Select(keyId string) (map[string]float64, error) {
-	conn := g.pool.Get()
-	conn.Do("SELECT", g.dbNum)
+func (db *GeoDB) Select(keyId string) (map[string]float64, error) {
+	conn := db.pool.Get()
+	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	val, err := redis.Positions(conn.Do("GEOPOS", g.index, keyId))
+	val, err := redis.Positions(conn.Do("GEOPOS", db.index, keyId))
 	if err != nil || val[0] == nil {
 		return nil, errors.Errorf("Error selecting POI with key '%s'", keyId)
 	}
@@ -50,13 +50,13 @@ func (g *GeoDB) Select(keyId string) (map[string]float64, error) {
 	return coord, nil
 }
 
-// func (g *GeoDB) SelectAllInRadius(coords map[string]float64, radius float64) ? {
-// 	conn := g.pool.Get()
+// func (db *GeoDB) SelectAllInRadius(coords map[string]float64, radius float64) ? {
+// 	conn := db.pool.Get()
 // 	defer conn.Close()
 //
 // 	_, err := conn.Do(
 // 		"GEORADIUS",
-// 		g.index,
+// 		db.index,
 // 		coords["lon"],
 // 		coords["lat"],
 // 		radius,
@@ -69,21 +69,21 @@ func (g *GeoDB) Select(keyId string) (map[string]float64, error) {
 // 	return val, nil
 // }
 
-func (g *GeoDB) Delete(keyId string) error {
-	conn := g.pool.Get()
-	conn.Do("SELECT", g.dbNum)
+func (db *GeoDB) Delete(keyId string) error {
+	conn := db.pool.Get()
+	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	if _, err := conn.Do("ZREM", g.index, keyId); err != nil {
+	if _, err := conn.Do("ZREM", db.index, keyId); err != nil {
 		return errors.Errorf("Error deleting key %s: %v", keyId, err)
 	}
 
 	return nil
 }
 
-func (g *GeoDB) Clear() error {
-	conn := g.pool.Get()
-	conn.Do("SELECT", g.dbNum)
+func (db *GeoDB) Clear() error {
+	conn := db.pool.Get()
+	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {

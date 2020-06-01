@@ -12,11 +12,22 @@ var (
 	_testRedisCfg *config.RedisConfig
 )
 
-func setupPoolTests() {
-	configFilePath := "../../../"
-	env := "test"
+type PoolTestConstants struct {
+	configFilePath string
+	env            string
+}
 
-	testCfg, _ := config.NewConfig(configFilePath, env)
+func newPoolTestConstants() *PoolTestConstants {
+	return &PoolTestConstants{
+		configFilePath: "../../../",
+		env:            "test",
+	}
+}
+
+func setupPoolTests() {
+	tc := newPoolTestConstants()
+
+	testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
 	_testRedisCfg = &(*testCfg).Redis
 }
 

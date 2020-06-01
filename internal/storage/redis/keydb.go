@@ -18,9 +18,21 @@ func NewKeyDB(pool *redis.Pool, dbNum int) *KeyDB {
 	}
 }
 
-func (k *KeyDB) Select(keyId string) (string, error) {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
+func (db *KeyDB) Insert(keyId, val string) error {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
+	defer conn.Close()
+
+	if _, err := conn.Do("SET", keyId, val); err != nil {
+		return errors.Errorf("Error setting key '%s': %v", keyId, err)
+	}
+
+	return nil
+}
+
+func (db *KeyDB) Select(keyId string) (string, error) {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	val, err := redis.String(conn.Do("GET", keyId))
@@ -31,21 +43,9 @@ func (k *KeyDB) Select(keyId string) (string, error) {
 	return val, nil
 }
 
-func (k *KeyDB) Insert(keyId, val string) error {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
-	defer conn.Close()
-
-	if _, err := conn.Do("SET", keyId, val); err != nil {
-		return errors.Errorf("Error setting key '%s': %v", keyId, err)
-	}
-
-	return nil
-}
-
-func (k *KeyDB) Delete(keyId string) error {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
+func (db *KeyDB) Delete(keyId string) error {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("DEL", keyId); err != nil {
@@ -55,9 +55,9 @@ func (k *KeyDB) Delete(keyId string) error {
 	return nil
 }
 
-func (k *KeyDB) Exists(keyId string) (bool, error) {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
+func (db *KeyDB) Exists(keyId string) (bool, error) {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	keyExists, err := redis.Bool(conn.Do("EXISTS", keyId))
@@ -68,9 +68,9 @@ func (k *KeyDB) Exists(keyId string) (bool, error) {
 	return keyExists, nil
 }
 
-func (k *KeyDB) CountKeys() (int, error) {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
+func (db *KeyDB) CountKeys() (int, error) {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	val, err := redis.Values(conn.Do("SCAN", nil))
@@ -82,9 +82,9 @@ func (k *KeyDB) CountKeys() (int, error) {
 	return len(keys), nil
 }
 
-func (k *KeyDB) Clear() error {
-	conn := k.pool.Get()
-  conn.Do("SELECT", k.dbNum)
+func (db *KeyDB) Clear() error {
+	conn := db.pool.Get()
+  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {

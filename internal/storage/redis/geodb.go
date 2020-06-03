@@ -6,9 +6,9 @@ import (
 )
 
 type GeoDB struct {
-	pool     *redis.Pool
-	dbNum    int
-	index    string
+	pool  *redis.Pool
+	dbNum int
+	index string
 }
 
 func NewGeoDB(pool *redis.Pool, dbNum int, index string) *GeoDB {
@@ -24,7 +24,14 @@ func (db *GeoDB) Insert(keyId string, coord map[string]float64) error {
 	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	_, err := conn.Do("GEOADD", db.index, coord["lon"], coord["lat"], keyId)
+	_, err := conn.Do(
+		"GEOADD",
+		db.index,
+		coord["lon"],
+		coord["lat"],
+		keyId,
+	)
+
 	if err != nil {
 		return errors.Errorf("Error adding POI with key '%s': %v", keyId, err)
 	}
@@ -37,7 +44,12 @@ func (db *GeoDB) Select(keyId string) (map[string]float64, error) {
 	conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	val, err := redis.Positions(conn.Do("GEOPOS", db.index, keyId))
+	val, err := redis.Positions(conn.Do(
+		"GEOPOS",
+		db.index,
+		keyId,
+	))
+
 	if err != nil || val[0] == nil {
 		return nil, errors.Errorf("Error selecting POI with key '%s'", keyId)
 	}
@@ -50,24 +62,33 @@ func (db *GeoDB) Select(keyId string) (map[string]float64, error) {
 	return coord, nil
 }
 
-// func (db *GeoDB) SelectAllInRadius(coords map[string]float64, radius float64) ? {
-// 	conn := db.pool.Get()
-// 	defer conn.Close()
-//
-// 	_, err := conn.Do(
-// 		"GEORADIUS",
-// 		db.index,
-// 		coords["lon"],
-// 		coords["lat"],
-// 		radius,
-// 		"km",
-// 		"WITHCOORD")
-//
-// 	if err != nil {
-// 		return "", errors.Errorf("Error adding POI with key '%s': %v", keyId, err)
-// 	}
-// 	return val, nil
-// }
+// will have to lock the key returned
+func (db *GeoDB) SelectNearestInRadius(coords map[string]float64, radius float64) (string, error) {
+	conn := db.pool.Get()
+	conn.Do("SELECT", db.dbNum)
+	defer conn.Close()
+
+	val, err := redis.Strings(conn.Do(
+		"GEORADIUS",
+		db.index,
+		coords["lon"],
+		coords["lat"],
+		radius,
+		"km",
+		"ASC",
+	))
+
+	if err != nil || len(val) == 0 {
+		return "", errors.Errorf("Error selecting nearest POI within %v km", radius)
+	}
+
+	closestPOIKeyId := val[0]
+
+	// aquire lock on item in geodb
+
+
+	return closestPOIKeyId, nil
+}
 
 func (db *GeoDB) Delete(keyId string) error {
 	conn := db.pool.Get()

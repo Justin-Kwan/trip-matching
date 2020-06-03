@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	guuid "github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/rs/xid"
 )
 
 type Order struct {
@@ -27,7 +27,7 @@ type OrderLocation struct {
 // Returns a new order struct with generated id.
 func NewOrder(params string) *Order {
 	o := &Order{}
-	o.Id = xid.New().String()
+	o.Id = guuid.New().String()
 	o.TimeRequested = time.Now().String()
 	o.Desc, _ = jsonparser.GetString([]byte(params), "description")
 	o.BidPrice, _ = jsonparser.GetFloat([]byte(params), "bidPrice")

@@ -63,8 +63,6 @@ var (
 type orderManagerTestConstants struct {
 	configFilePath string
 	env            string
-	keyDBNum       int
-	geoDBNum       int
 	setIndex       string
 }
 
@@ -72,8 +70,6 @@ func newOrderManagerTestConstants() *orderManagerTestConstants {
 	return &orderManagerTestConstants{
 		configFilePath: "../",
 		env:            "test",
-		keyDBNum:       0,
-		geoDBNum:       1,
 		setIndex:       "test_index",
 	}
 }
@@ -81,12 +77,12 @@ func newOrderManagerTestConstants() *orderManagerTestConstants {
 func setupTests() func() {
 	tc := newOrderManagerTestConstants()
 
-	testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
-	testRedisCfg := &(*testCfg).Redis
-	redisPool, _ := redis.NewPool(testRedisCfg)
+	cfg, _ := config.NewConfig(tc.configFilePath, tc.env)
+	keyDBPool := redis.NewPool(&(*cfg).RedisKeyDB)
+	geoDBPool := redis.NewPool(&(*cfg).RedisGeoDB)
 
-	_keyDB = redis.NewKeyDB(redisPool, tc.keyDBNum)
-	_geoDB = redis.NewGeoDB(redisPool, tc.geoDBNum, tc.setIndex)
+	_keyDB = redis.NewKeyDB(keyDBPool)
+	_geoDB = redis.NewGeoDB(geoDBPool, tc.setIndex)
 
 	_keyDB.Clear()
 	_geoDB.Clear()
@@ -111,6 +107,7 @@ func TestAddOrder(t *testing.T) {
 		// assert correct order was added in key value db
 		orderStr, err := _keyDB.Select(testOrder.Id)
 		if err != nil {
+			teardownTests()
 			log.Fatalf(err.Error())
 		}
 
@@ -124,6 +121,7 @@ func TestAddOrder(t *testing.T) {
 		// assert correct order was added in geo db
 		coord, err := _geoDB.Select(testOrder.Id)
 		if err != nil {
+			teardownTests()
 			log.Fatal(err.Error())
 		}
 
@@ -162,6 +160,7 @@ func TestOrderExists(t *testing.T) {
 		// function under test
 		orderExists, err := _om.OrderExists(testOrder.Id)
 		if err != nil {
+			teardownTests()
 			log.Fatalf(err.Error())
 		}
 
@@ -171,6 +170,7 @@ func TestOrderExists(t *testing.T) {
 	// function under test
 	orderExists, err := _om.OrderExists("non_existent_id")
 	if err != nil {
+		teardownTests()
 		log.Fatalf(err.Error())
 	}
 
@@ -179,6 +179,7 @@ func TestOrderExists(t *testing.T) {
 	// function under test
 	orderExists, err = _om.OrderExists("test_order_id1 ")
 	if err != nil {
+		teardownTests()
 		log.Fatalf(err.Error())
 	}
 
@@ -187,6 +188,7 @@ func TestOrderExists(t *testing.T) {
 	// function under test
 	orderExists, err = _om.OrderExists("test_ord er_id2")
 	if err != nil {
+		teardownTests()
 		log.Fatalf(err.Error())
 	}
 
@@ -195,6 +197,7 @@ func TestOrderExists(t *testing.T) {
 	// function under test
 	orderExists, err = _om.OrderExists(" ")
 	if err != nil {
+		teardownTests()
 		log.Fatalf(err.Error())
 	}
 
@@ -228,6 +231,7 @@ func TestCountOrders(t *testing.T) {
 	// function under test
 	orderCount, err := _om.CountOrders()
 	if err != nil {
+		teardownTests()
 		log.Fatalf(err.Error())
 	}
 
@@ -243,6 +247,7 @@ func TestCountOrders(t *testing.T) {
 		// function under test
 		orderCount, err := _om.CountOrders()
 		if err != nil {
+			teardownTests()
 			log.Fatalf(err.Error())
 		}
 

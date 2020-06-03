@@ -14,9 +14,9 @@ import (
 const (
 	// test case constants
 	_testKey1 = "test_key1"
-	_testVal1 = "test_value1"
+	_testVal1 = "test_resue1"
 	_testKey2 = "test_key2"
-	_testVal2 = "test_value2"
+	_testVal2 = "test_resue2"
 	_testKey3 = "test_key3"
 	_testVal3 = `{
     address: '{{integer(100, 999)}} {{street()}}, {{city()}}, {{state()}}, {{integer(100, 10000)}}',
@@ -43,7 +43,6 @@ const (
 type keyDBTestConstants struct {
 	configFilePath string
 	env            string
-	dbNum          int
 	setIndex       string
 }
 
@@ -51,30 +50,29 @@ func newKeyDBTestConstants() *keyDBTestConstants {
 	return &keyDBTestConstants{
 		configFilePath: "../../../",
 		env:            "test",
-		dbNum:          0,
 	}
 }
 
 func insertKeys(keyCount int, keyDB *KeyDB) {
 	for i := 0; i < keyCount; i++ {
-		keyDB.Insert(strconv.Itoa(i), "test_value")
+		keyDB.Insert(strconv.Itoa(i), "test_resue")
 	}
 }
 
 func TestKeyDB(t *testing.T) {
 	g := Goblin(t)
 
-	tc := newKeyDBTestConstants()
-
 	var keyDB *KeyDB
 
 	g.Describe("keystore.go tests", func() {
 
 		g.Before(func() {
-			testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
-			testRedisCfg := &(*testCfg).Redis
-			redisPool, _ := NewPool(testRedisCfg)
-			keyDB = NewKeyDB(redisPool, tc.dbNum)
+			tc := newKeyDBTestConstants()
+			cfg, _ := config.NewConfig(tc.configFilePath, tc.env)
+
+			keyDBPool := NewPool(&(*cfg).RedisKeyDB)
+			keyDB = NewKeyDB(keyDBPool)
+
 			keyDB.Clear()
 		})
 
@@ -83,52 +81,52 @@ func TestKeyDB(t *testing.T) {
 		})
 
 		g.Describe("Insert() Tests", func() {
-			g.It("should insert a key with a small value", func() {
+			g.It("should insert a key with a small resue", func() {
 				// function under test
 				if err := keyDB.Insert(_testKey1, _testVal1); err != nil {
 					log.Fatal(err.Error())
 				}
-				val, err := keyDB.Select(_testKey1)
+				res, err := keyDB.Select(_testKey1)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
-				g.Assert(val).Equal(_testVal1)
+				g.Assert(res).Equal(_testVal1)
 			})
 
-			g.It("should insert a key with a small value", func() {
+			g.It("should insert a key with a small resue", func() {
 				// function under test
 				if err := keyDB.Insert(_testKey2, _testVal2); err != nil {
 					log.Fatal(err.Error())
 				}
-				val, err := keyDB.Select(_testKey2)
+				res, err := keyDB.Select(_testKey2)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
-				g.Assert(val).Equal(_testVal2)
+				g.Assert(res).Equal(_testVal2)
 			})
 
-			g.It("should insert a key with a large value", func() {
+			g.It("should insert a key with a large resue", func() {
 				// function under test
 				if err := keyDB.Insert(_testKey3, _testVal3); err != nil {
 					log.Fatal(err.Error())
 				}
-				val, err := keyDB.Select(_testKey3)
+				res, err := keyDB.Select(_testKey3)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
-				g.Assert(val).Equal(_testVal3)
+				g.Assert(res).Equal(_testVal3)
 			})
 
-			g.It("should insert a key with an empty string value", func() {
+			g.It("should insert a key with an empty string resue", func() {
 				// function under test
 				if err := keyDB.Insert(_testKey4, _testVal4); err != nil {
 					log.Fatal(err.Error())
 				}
-				val4, err := keyDB.Select(_testKey4)
+				res4, err := keyDB.Select(_testKey4)
 				if err != nil {
 					log.Fatalf(err.Error())
 				}
-				g.Assert(val4).Equal(_testVal4)
+				g.Assert(res4).Equal(_testVal4)
 			})
 		})
 
@@ -136,30 +134,30 @@ func TestKeyDB(t *testing.T) {
 			g.It("should assert error selecting non-existent key", func() {
 				// function under test (selecting non-existent key)
 				_, err := keyDB.Select("non_existent_key")
-				g.Assert(err).Equal(errors.Errorf("Error getting value using key 'non_existent_key': redigo: nil returned"))
+				g.Assert(err).Equal(errors.Errorf("Error getting resue using key 'non_existent_key': redigo: nil returned"))
 			})
 
 			g.It("should assert error selecting non-existent key", func() {
 				// function under test (selecting non-existent key)
 				_, err := keyDB.Select("test_key 1")
-				g.Assert(err).Equal(errors.Errorf("Error getting value using key 'test_key 1': redigo: nil returned"))
+				g.Assert(err).Equal(errors.Errorf("Error getting resue using key 'test_key 1': redigo: nil returned"))
 			})
 
 			g.It("should assert error selecting non-existent key", func() {
 				// function under test (selecting non-existent key)
 				_, err := keyDB.Select(" test_key2")
-				g.Assert(err).Equal(errors.Errorf("Error getting value using key ' test_key2': redigo: nil returned"))
+				g.Assert(err).Equal(errors.Errorf("Error getting resue using key ' test_key2': redigo: nil returned"))
 			})
 
 			g.It("should assert error selecting non-existent key", func() {
 				// function under test (selecting non-existent key)
 				_, err := keyDB.Select("test_key3 ")
-				g.Assert(err).Equal(errors.Errorf("Error getting value using key 'test_key3 ': redigo: nil returned"))
+				g.Assert(err).Equal(errors.Errorf("Error getting resue using key 'test_key3 ': redigo: nil returned"))
 			})
 		})
 
 		g.Describe("Delete() Tests", func() {
-			g.It("should assert deleted key value pair does not exist", func() {
+			g.It("should assert deleted key resue pair does not exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey1, _testVal1); err != nil {
 					log.Fatal(err.Error())
@@ -183,7 +181,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(false)
 			})
 
-			g.It("should assert deleted key value pair does not exist", func() {
+			g.It("should assert deleted key resue pair does not exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey2, _testVal2); err != nil {
 					log.Fatal(err.Error())
@@ -207,7 +205,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(false)
 			})
 
-			g.It("should assert deleted key value pair does not exist", func() {
+			g.It("should assert deleted key resue pair does not exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey3, _testVal3); err != nil {
 					log.Fatal(err.Error())
@@ -231,7 +229,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(false)
 			})
 
-			g.It("should assert deleted key value pair does not exist", func() {
+			g.It("should assert deleted key resue pair does not exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey4, _testVal4); err != nil {
 					log.Fatal(err.Error())
@@ -266,7 +264,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(false)
 			})
 
-			g.It("inserted key value pair should exist", func() {
+			g.It("inserted key resue pair should exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey1, _testVal1); err != nil {
 					log.Fatal(err.Error())
@@ -278,7 +276,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(true)
 			})
 
-			g.It("inserted key value pair should exist", func() {
+			g.It("inserted key resue pair should exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey2, _testVal2); err != nil {
 					log.Fatal(err.Error())
@@ -290,7 +288,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(true)
 			})
 
-			g.It("inserted key value pair should exist", func() {
+			g.It("inserted key resue pair should exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey3, _testVal3); err != nil {
 					log.Fatal(err.Error())
@@ -302,7 +300,7 @@ func TestKeyDB(t *testing.T) {
 				g.Assert(keyExists).Equal(true)
 			})
 
-			g.It("inserted key value pair should exist", func() {
+			g.It("inserted key resue pair should exist", func() {
 				// setup
 				if err := keyDB.Insert(_testKey4, _testVal4); err != nil {
 					log.Fatal(err.Error())

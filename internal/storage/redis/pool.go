@@ -17,7 +17,7 @@ type PoolConfig struct {
 	maxActiveConn   int
 }
 
-func NewPool(redisCfg *config.RedisConfig) (*redis.Pool, error) {
+func NewPool(redisCfg *config.RedisConfig) *redis.Pool {
 	cfg := setConfig(redisCfg)
 
 	return &redis.Pool{
@@ -34,10 +34,14 @@ func NewPool(redisCfg *config.RedisConfig) (*redis.Pool, error) {
 			return conn, nil
 		},
 		TestOnBorrow: func(conn redis.Conn, t time.Time) error {
+			if time.Since(t) < time.Minute {
+				return nil
+			}
+
 			_, err := conn.Do("PING")
 			return err
 		},
-	}, nil
+	}
 }
 
 func setConfig(redisCfg *config.RedisConfig) *PoolConfig {

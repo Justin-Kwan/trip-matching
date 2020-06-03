@@ -12,6 +12,16 @@ const (
 	_configFilePath = "../../"
 )
 
+func initRedis(cfg *config.Config) error {
+	keyDBPool := redis.NewPool(&(*cfg).RedisKeyDB)
+	geoDBPool := redis.NewPool(&(*cfg).RedisGeoDB)
+
+	/*keyDB := */redis.NewKeyDB(keyDBPool)
+	/*geoDB := */redis.NewGeoDB(geoDBPool, "index")
+	log.Printf("Redis connection pools initialized...")
+	return nil
+}
+
 func main() {
 	env, err := config.ParseEnvFlag()
 	if err != nil {
@@ -25,16 +35,7 @@ func main() {
 
 	log.Printf("App config: %+v \n", *cfg)
 
-	// setup redis
-	redisPool, err := redis.NewPool(&(*cfg).Redis)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	/*keyDB := */redis.NewKeyDB(redisPool, 0)
-	/*geoDB := */redis.NewGeoDB(redisPool, 1, "index")
-
-	log.Printf("Redis connection pool initialized...")
+	initRedis(cfg)
 
 	// setup socket server
 	sh := websocket.NewSocketHandler(&(*cfg).WsServer)

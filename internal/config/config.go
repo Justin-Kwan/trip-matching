@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	WsServer WsServerConfig `yaml:"websocket_server"`
-	Redis    RedisConfig    `yaml:"redis_store"`
+	WsServer   WsServerConfig `yaml:"websocket_server"`
+	RedisKeyDB RedisConfig    `yaml:"redis_keydb"`
+	RedisGeoDB RedisConfig    `yaml:"redis_geodb"`
 }
 
 type WsServerConfig struct {
@@ -23,7 +24,7 @@ type WsServerConfig struct {
 }
 
 type RedisConfig struct {
-	IdleTimeout  int    `yaml:idle_timeout"`
+	IdleTimeout  int    `yaml:"idle_timeout"`
 	MaxIdle      int    `yaml:"max_idle_connections"`
 	MaxActive    int    `yaml:"max_active_connections"`
 	Addr         string `yaml:"address"`

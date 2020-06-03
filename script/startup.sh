@@ -8,3 +8,6 @@ go test ./...
 
 # show all keys in sorted set
 zrangebyscore "sorted set index" -inf +inf
+
+# start redis instance on port
+redis-server --port 6385

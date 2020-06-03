@@ -8,22 +8,19 @@ import (
 
 type KeyDB struct {
 	pool	*redis.Pool
-	dbNum int
 }
 
-func NewKeyDB(pool *redis.Pool, dbNum int) *KeyDB {
+func NewKeyDB(pool *redis.Pool) *KeyDB {
 	return &KeyDB{
 		pool:  pool,
-		dbNum: dbNum,
 	}
 }
 
-func (db *KeyDB) Insert(keyId, val string) error {
+func (db *KeyDB) Insert(keyId, res string) error {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	if _, err := conn.Do("SET", keyId, val); err != nil {
+	if _, err := conn.Do("SET", keyId, res); err != nil {
 		return errors.Errorf("Error setting key '%s': %v", keyId, err)
 	}
 
@@ -32,20 +29,18 @@ func (db *KeyDB) Insert(keyId, val string) error {
 
 func (db *KeyDB) Select(keyId string) (string, error) {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	val, err := redis.String(conn.Do("GET", keyId))
+	res, err := redis.String(conn.Do("GET", keyId))
 	if err != nil {
-		return "", errors.Errorf("Error getting value using key '%s': %v", keyId, err)
+		return "", errors.Errorf("Error getting resue using key '%s': %v", keyId, err)
 	}
 
-	return val, nil
+	return res, nil
 }
 
 func (db *KeyDB) Delete(keyId string) error {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("DEL", keyId); err != nil {
@@ -57,7 +52,6 @@ func (db *KeyDB) Delete(keyId string) error {
 
 func (db *KeyDB) Exists(keyId string) (bool, error) {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	keyExists, err := redis.Bool(conn.Do("EXISTS", keyId))
@@ -70,25 +64,23 @@ func (db *KeyDB) Exists(keyId string) (bool, error) {
 
 func (db *KeyDB) CountKeys() (int, error) {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
-	val, err := redis.Values(conn.Do("SCAN", nil))
+	res, err := redis.Values(conn.Do("SCAN", nil))
 	if err != nil {
 		return 0, errors.Errorf("Error counting keys %v:", err)
 	}
-	keys, _ := redis.Strings(val[1], nil)
+	keys, _ := redis.Strings(res[1], nil)
 
 	return len(keys), nil
 }
 
 func (db *KeyDB) Clear() error {
 	conn := db.pool.Get()
-  conn.Do("SELECT", db.dbNum)
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {
-		return errors.Errorf("Error clearing all key value pairs: %v", err)
+		return errors.Errorf("Error clearing all key resue pairs: %v", err)
 	}
 
 	return nil

@@ -93,6 +93,20 @@ var (
 				"lat": 67.12412,
 			},
 		},
+		TestPOI{
+			id: "test_id11",
+			coord: map[string]float64{
+				"lon": 45.213,
+				"lat": 74.98723,
+			},
+		},
+		TestPOI{
+			id: "test_id12",
+			coord: map[string]float64{
+				"lon": 45.213,
+				"lat": 74.98723,
+			},
+		},
 	}
 )
 
@@ -104,7 +118,6 @@ type TestPOI struct {
 type geoDBTestConstants struct {
 	configFilePath string
 	env            string
-	dbNum          int
 	setIndex       string
 }
 
@@ -112,7 +125,6 @@ func newGeoDBTestConstants() *geoDBTestConstants {
 	return &geoDBTestConstants{
 		configFilePath: "../../../",
 		env:            "test",
-		dbNum:          1,
 		setIndex:       "test_index",
 	}
 }
@@ -120,11 +132,10 @@ func newGeoDBTestConstants() *geoDBTestConstants {
 func setupGeoDBTests() func() {
 	tc := newGeoDBTestConstants()
 
-	testCfg, _ := config.NewConfig(tc.configFilePath, tc.env)
-	testRedisCfg := &(*testCfg).Redis
-	redisPool, _ := NewPool(testRedisCfg)
+	cfg, _ := config.NewConfig(tc.configFilePath, tc.env)
+	geoDBPool := NewPool(&(*cfg).RedisGeoDB)
 
-	_geoDB = NewGeoDB(redisPool, tc.dbNum, tc.setIndex)
+	_geoDB = NewGeoDB(geoDBPool, tc.setIndex)
 	_geoDB.Clear()
 
 	return func() {
@@ -133,8 +144,8 @@ func setupGeoDBTests() func() {
 }
 
 func TestInsert(t *testing.T) {
-	teardownGeoDBTests := setupGeoDBTests()
-	defer teardownGeoDBTests()
+	teardownTests := setupGeoDBTests()
+	defer teardownTests()
 
 	for _, testPOI := range testPOIs {
 		// function under test
@@ -145,6 +156,7 @@ func TestInsert(t *testing.T) {
 		// select and assert point of interest exists
 		coord, err := _geoDB.Select(testPOI.id)
 		if err != nil {
+			teardownTests()
 			log.Fatalf(err.Error())
 		}
 
@@ -154,8 +166,8 @@ func TestInsert(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
-	teardownGeoDBTests := setupGeoDBTests()
-	defer teardownGeoDBTests()
+	teardownTests := setupGeoDBTests()
+	defer teardownTests()
 
 	// assert errors when selecting non-existent keys
 	_, err := _geoDB.Select("non_existent_key")
@@ -171,9 +183,9 @@ func TestSelect(t *testing.T) {
 	assert.EqualError(t, err, "Error selecting POI with key '%'")
 }
 
-func TestSelectAllInRadius(t *testing.T) {
-	teardownGeoDBTests := setupGeoDBTests()
-	defer teardownGeoDBTests()
+func TestSelectNearestInRadius(t *testing.T) {
+	teardownTests := setupGeoDBTests()
+	defer teardownTests()
 
 	// setup
 	for _, testPOI := range testPOIs {
@@ -192,23 +204,29 @@ func TestSelectAllInRadius(t *testing.T) {
 			map[string]float64{"lon": 90, "lat": 65},
 			1,
 			"",
-			errors.Errorf("Error selecting nearest POI within 1 km"),
+			errors.Errorf("Error selecting nearest POI to (90, 65) within 1 km"),
 		},
 		{
 			map[string]float64{"lon": 86.3234, "lat": 66.123},
 			0,
 			"",
-			errors.Errorf("Error selecting nearest POI within 0 km"),
+			errors.Errorf("Error selecting nearest POI to (86.3234, 66.123) within 0 km"),
 		},
 		{
 			map[string]float64{"lon": 90, "lat": 65},
 			-1,
 			"",
-			errors.Errorf("Error selecting nearest POI within -1 km"),
+			errors.Errorf("Error selecting nearest POI to (90, 65) within -1 km"),
 		},
 		{
 			map[string]float64{"lon": 75.8, "lat": 67.124},
-			8.5,
+			8.086,
+			"test_id10",
+			nil,
+		},
+		{
+			map[string]float64{"lon": 75.8, "lat": 67.124},
+			20,
 			"test_id10",
 			nil,
 		},
@@ -222,6 +240,18 @@ func TestSelectAllInRadius(t *testing.T) {
 			map[string]float64{"lon": 45, "lat": 32},
 			19,
 			"test_id8",
+			nil,
+		},
+		{
+			map[string]float64{"lon": 46.2, "lat": 75.001},
+			29,
+			"test_id11",
+			nil,
+		},
+		{
+			map[string]float64{"lon": -178.8991238, "lat": -80.2312431},
+			536.303,
+			"test_id4",
 			nil,
 		},
 	}
@@ -240,8 +270,8 @@ func TestSelectAllInRadius(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	teardownGeoDBTests := setupGeoDBTests()
-	defer teardownGeoDBTests()
+	teardownTests := setupGeoDBTests()
+	defer teardownTests()
 
 	for _, testPOI := range testPOIs {
 		// setup
@@ -252,6 +282,7 @@ func TestDelete(t *testing.T) {
 		// select and assert point of interest exists before deleting
 		coord, err := _geoDB.Select(testPOI.id)
 		if err != nil {
+			teardownTests()
 			log.Fatalf(err.Error())
 		}
 
@@ -267,4 +298,16 @@ func TestDelete(t *testing.T) {
 		_, err = _geoDB.Select(testPOI.id)
 		assert.EqualError(t, err, "Error selecting POI with key '"+testPOI.id+"'")
 	}
+
+	err := _geoDB.Delete("non_existent_skey")
+	assert.EqualError(t, err, "Error deleting POI with key 'non_existent_skey'")
+
+	err = _geoDB.Delete(" ")
+	assert.EqualError(t, err, "Error deleting POI with key ' '")
+
+	err = _geoDB.Delete("")
+	assert.EqualError(t, err, "Error deleting POI with key ''")
+
+	err = _geoDB.Delete("*&^")
+	assert.EqualError(t, err, "Error deleting POI with key '*&^'")
 }

@@ -169,18 +169,20 @@ func TestSelect(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
-	// assert errors when selecting non-existent keys
-	_, err := _geoDB.Select("non_existent_key")
-	assert.EqualError(t, err, "Error selecting POI with key 'non_existent_key'")
+	var errTestCases = []struct {
+		inputKeyId  string
+		expectedErr error
+	}{
+		{"non_existent_key", errors.Errorf("Error selecting POI with key 'non_existent_key'")},
+		{" ", errors.Errorf("Error selecting POI with key ' '")},
+		{"", errors.Errorf("Error selecting POI with key ''")},
+		{"*", errors.Errorf("Error selecting POI with key '*'")},
+	}
 
-	_, err = _geoDB.Select(" ")
-	assert.EqualError(t, err, "Error selecting POI with key ' '")
-
-	_, err = _geoDB.Select("")
-	assert.EqualError(t, err, "Error selecting POI with key ''")
-
-	_, err = _geoDB.Select("%")
-	assert.EqualError(t, err, "Error selecting POI with key '%'")
+	for _, testCase := range errTestCases {
+		_, err := _geoDB.Select(testCase.inputKeyId)
+		assert.EqualError(t, err, testCase.expectedErr.Error())
+	}
 }
 
 func TestSelectNearestInRadius(t *testing.T) {
@@ -195,8 +197,8 @@ func TestSelectNearestInRadius(t *testing.T) {
 	}
 
 	var testCases = []struct {
-		coordInput    map[string]float64
-		radiusInput   float64
+		inputCoord    map[string]float64
+		inputRadius   float64
 		expectedKeyId string
 		expectedErr   error
 	}{
@@ -258,7 +260,7 @@ func TestSelectNearestInRadius(t *testing.T) {
 
 	for _, testCase := range testCases {
 		// function under test
-		POIkeyId, err := _geoDB.SelectNearestInRadius(testCase.coordInput, testCase.radiusInput)
+		POIkeyId, err := _geoDB.SelectNearestInRadius(testCase.inputCoord, testCase.inputRadius)
 		assert.Equal(t, testCase.expectedKeyId, POIkeyId, "should match closest point of interest's key id within radius")
 
 		if testCase.expectedErr != nil {
@@ -299,15 +301,18 @@ func TestDelete(t *testing.T) {
 		assert.EqualError(t, err, "Error selecting POI with key '"+testPOI.id+"'")
 	}
 
-	err := _geoDB.Delete("non_existent_skey")
-	assert.EqualError(t, err, "Error deleting POI with key 'non_existent_skey'")
+	var errTestCases = []struct {
+		inputKeyId  string
+		expectedErr error
+	}{
+		{"non_existent_key", errors.Errorf("Error deleting POI with key 'non_existent_key'")},
+		{" ", errors.Errorf("Error deleting POI with key ' '")},
+		{"", errors.Errorf("Error deleting POI with key ''")},
+		{"*&^", errors.Errorf("Error deleting POI with key '*&^'")},
+	}
 
-	err = _geoDB.Delete(" ")
-	assert.EqualError(t, err, "Error deleting POI with key ' '")
-
-	err = _geoDB.Delete("")
-	assert.EqualError(t, err, "Error deleting POI with key ''")
-
-	err = _geoDB.Delete("*&^")
-	assert.EqualError(t, err, "Error deleting POI with key '*&^'")
+	for _, testCase := range errTestCases {
+		err := _geoDB.Delete(testCase.inputKeyId)
+		assert.EqualError(t, err, testCase.expectedErr.Error())
+	}
 }

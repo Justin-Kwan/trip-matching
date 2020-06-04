@@ -37,8 +37,8 @@ func (db *GeoDB) Select(keyId string) (map[string]float64, error) {
 
 	res, err := redis.Positions(conn.Do("GEOPOS", db.index, keyId))
 
-	keyNotFound := res[0] == nil
-	if err != nil || keyNotFound {
+	emptyCoord := res[0] == nil
+	if err != nil || emptyCoord {
 		return nil, errors.Errorf("Error selecting POI with key '%s'", keyId)
 	}
 

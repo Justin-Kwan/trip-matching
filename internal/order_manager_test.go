@@ -4,6 +4,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	"order-matching/internal/config"
@@ -134,17 +135,23 @@ func TestGetOrder(t *testing.T) {
 	teardownTests := setupTests()
 	defer teardownTests()
 
-	// function under test
-	_, err := _om.GetOrder("non_existent_id")
-	assert.EqualError(t, err, "Error getting value using key 'non_existent_id': redigo: nil returned")
+	var errTestCases = []struct {
+		inputKeyId  string
+		expectedErr error
+	}{
+		{"non_existent_id", errors.Errorf("Error getting value using key 'non_existent_id'")},
+		{"test_order_id1 ", errors.Errorf("Error getting value using key 'test_order_id1 '")},
+		{"test_ord er_id2", errors.Errorf("Error getting value using key 'test_ord er_id2'")},
+		{" ", errors.Errorf("Error getting value using key ' '")},
+		{"*", errors.Errorf("Error getting value using key '*'")},
+		{"(*&)", errors.Errorf("Error getting value using key '(*&)'")},
+	}
 
-	// function under test
-	_, err = _om.GetOrder("test_order_id1 ")
-	assert.EqualError(t, err, "Error getting value using key 'test_order_id1 ': redigo: nil returned")
-
-	// function under test
-	_, err = _om.GetOrder(" ")
-	assert.EqualError(t, err, "Error getting value using key ' ': redigo: nil returned")
+	for _, testCase := range errTestCases {
+		// function under test
+		_, err := _om.GetOrder(testCase.inputKeyId)
+		assert.EqualError(t, err, testCase.expectedErr.Error())
+	}
 }
 
 func TestOrderExists(t *testing.T) {
@@ -167,44 +174,33 @@ func TestOrderExists(t *testing.T) {
 		assert.True(t, orderExists, "order should exist")
 	}
 
-	// function under test
-	orderExists, err := _om.OrderExists("non_existent_id")
-	if err != nil {
-		teardownTests()
-		log.Fatalf(err.Error())
+	var nonExistentKeyTestCases = []struct {
+		inputKeyId string
+	}{
+		{"non_existent_id"},
+		{"test_order_id1 "},
+		{"test_ord er_id2"},
+		{" "},
+		{"*"},
+		{"(*&)"},
 	}
 
-	assert.False(t, orderExists, "order should not exist")
+	for _, testCase := range nonExistentKeyTestCases {
+		// function under test
+		orderExists, err := _om.OrderExists(testCase.inputKeyId)
+		if err != nil {
+			teardownTests()
+			log.Fatalf(err.Error())
+		}
 
-	// function under test
-	orderExists, err = _om.OrderExists("test_order_id1 ")
-	if err != nil {
-		teardownTests()
-		log.Fatalf(err.Error())
+		assert.False(t, orderExists, "order should not exist")
 	}
-
-	assert.False(t, orderExists, "order should not exist")
-
-	// function under test
-	orderExists, err = _om.OrderExists("test_ord er_id2")
-	if err != nil {
-		teardownTests()
-		log.Fatalf(err.Error())
-	}
-
-	assert.False(t, orderExists, "order should not exist")
-
-	// function under test
-	orderExists, err = _om.OrderExists(" ")
-	if err != nil {
-		teardownTests()
-		log.Fatalf(err.Error())
-	}
-
-	assert.False(t, orderExists, "order should not exist")
 }
 
 func TestDeleteOrder(t *testing.T) {
+	teardownTests := setupTests()
+	defer teardownTests()
+
 	for _, testOrder := range testOrders {
 		// setup
 		if err := _om.AddNewOrder(&testOrder); err != nil {
@@ -216,7 +212,7 @@ func TestDeleteOrder(t *testing.T) {
 
 		// assert order deleted from key value db
 		_, err := _keyDB.Select(testOrder.Id)
-		assert.EqualError(t, err, "Error getting value using key '"+testOrder.Id+"': redigo: nil returned")
+		assert.EqualError(t, err, "Error getting value using key '"+testOrder.Id+"'")
 
 		// assert order deleted from geo db
 		_, err = _geoDB.Select(testOrder.Id)

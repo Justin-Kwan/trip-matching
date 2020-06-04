@@ -65,8 +65,9 @@ func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
 	return order, nil
 }
 
-// func (om *OrderManager) GetOrdersInRadius(lon float64, lat float64, radius float64) {
-// }
+func (om *OrderManager) GetNearestOrder(lon float64, lat float64, radius float64) {
+	
+}
 
 // tested
 func (om *OrderManager) DeleteOrder(orderId string) error {

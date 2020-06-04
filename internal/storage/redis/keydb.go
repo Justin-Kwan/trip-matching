@@ -20,8 +20,9 @@ func (db *KeyDB) Insert(keyId, res string) error {
 	conn := db.pool.Get()
 	defer conn.Close()
 
-	if _, err := conn.Do("SET", keyId, res); err != nil {
-		return errors.Errorf("Error setting key '%s': %v", keyId, err)
+	res, err := redis.String(conn.Do("SET", keyId, res))
+	if err != nil {
+		return errors.Errorf("Error inserting key '%s'", keyId)
 	}
 
 	return nil
@@ -33,7 +34,7 @@ func (db *KeyDB) Select(keyId string) (string, error) {
 
 	res, err := redis.String(conn.Do("GET", keyId))
 	if err != nil {
-		return "", errors.Errorf("Error getting resue using key '%s': %v", keyId, err)
+		return "", errors.Errorf("Error getting value using key '%s'", keyId)
 	}
 
 	return res, nil
@@ -43,8 +44,11 @@ func (db *KeyDB) Delete(keyId string) error {
 	conn := db.pool.Get()
 	defer conn.Close()
 
-	if _, err := conn.Do("DEL", keyId); err != nil {
-		return errors.Errorf("Error deleting key '%s': %v", keyId, err)
+	res, err := redis.Bool(conn.Do("DEL", keyId))
+
+	keyNotFound := res == false
+	if err != nil || keyNotFound {
+		return errors.Errorf("Error deleting key '%s'", keyId)
 	}
 
 	return nil
@@ -80,7 +84,7 @@ func (db *KeyDB) Clear() error {
 	defer conn.Close()
 
 	if _, err := conn.Do("FLUSHDB"); err != nil {
-		return errors.Errorf("Error clearing all key resue pairs: %v", err)
+		return errors.Errorf("Error clearing all key value pairs: %v", err)
 	}
 
 	return nil

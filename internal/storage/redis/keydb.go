@@ -7,12 +7,12 @@ import (
 )
 
 type KeyDB struct {
-	pool	*redis.Pool
+	pool   *redis.Pool
 }
 
 func NewKeyDB(pool *redis.Pool) *KeyDB {
 	return &KeyDB{
-		pool:  pool,
+		pool: pool,
 	}
 }
 
@@ -21,7 +21,6 @@ func (db *KeyDB) Insert(keyId, res string) error {
 	defer conn.Close()
 
 	res, err := redis.String(conn.Do("SET", keyId, res))
-	
 	if err != nil {
 		return errors.Errorf("Error inserting key '%s'", keyId)
 	}
@@ -75,8 +74,8 @@ func (db *KeyDB) CountKeys() (int, error) {
 	if err != nil {
 		return 0, errors.Errorf("Error counting keys %v:", err)
 	}
-	keys, _ := redis.Strings(res[1], nil)
 
+	keys, _ := redis.Strings(res[1], nil)
 	return len(keys), nil
 }
 

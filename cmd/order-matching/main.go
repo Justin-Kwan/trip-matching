@@ -16,8 +16,8 @@ func initRedis(cfg *config.Config) error {
 	keyDBPool := redis.NewPool(&(*cfg).RedisKeyDB)
 	geoDBPool := redis.NewPool(&(*cfg).RedisGeoDB)
 
-	/*keyDB := */redis.NewKeyDB(keyDBPool)
-	/*geoDB := */redis.NewGeoDB(geoDBPool, "index")
+	/*keyDB := */ redis.NewKeyDB(keyDBPool)
+	/*geoDB := */ redis.NewGeoDB(geoDBPool, "index")
 	log.Printf("Redis connection pools initialized...")
 	return nil
 }

@@ -6,9 +6,9 @@ import (
 )
 
 type GeoDB struct {
-	pool  *redis.Pool
-	dbNum int
-	index string
+	pool   *redis.Pool
+	locker *Locker
+	index  string
 }
 
 // Returns a new geo database access struct given a redis connection
@@ -16,8 +16,8 @@ type GeoDB struct {
 // within the key values store.
 func NewGeoDB(pool *redis.Pool, index string) *GeoDB {
 	return &GeoDB{
-		pool:  pool,
-		index: index,
+		pool:   pool,
+		index:  index,
 	}
 }
 
@@ -59,15 +59,11 @@ func (db *GeoDB) Select(keyId string) (map[string]float64, error) {
 	return coord, nil
 }
 
-// Returns the key id of the closest point to a point of interest
-// (lon, lat) a radius to search within. Returns a specific error
-// if no nearby point is found within the given radius. A generic
-// error is returned for all other errors.
-func (db *GeoDB) SelectNearestInRadius(coords map[string]float64, radius float64) (string, error) {
+func (db *GeoDB) SelectAllInRadius(coords map[string]float64, radius float64) ([]string, error) {
 	conn := db.pool.Get()
 	defer conn.Close()
 
-	res, err := redis.Strings(conn.Do(
+	POIKeyIds, err := redis.Strings(conn.Do(
 		"GEORADIUS",
 		db.index,
 		coords["lon"],
@@ -79,18 +75,14 @@ func (db *GeoDB) SelectNearestInRadius(coords map[string]float64, radius float64
 
 	if err != nil {
 		errStr := "Error selecting nearest POI to (%v, %v) within %v km"
-		return "", errors.Errorf(errStr, coords["lon"], coords["lat"], radius)
-	} else if len(res) == 0 {
-		return "", errors.Errorf("Error, no nearby POI found")
+		return nil, errors.Errorf(errStr, coords["lon"], coords["lat"], radius)
 	}
 
-	closestPOIKeyId := res[0]
-	return closestPOIKeyId, nil
+	return POIKeyIds, nil
 }
 
 // Deletes a specific point of interest (lon, lat) by key in the
-// current geospacial index. Returns a specific error if the passed
-// in key is no found. A generic error is returned for all other
+// current geospacial index. A generic error is returned for all other
 // errors.
 func (db *GeoDB) Delete(keyId string) error {
 	conn := db.pool.Get()
@@ -98,10 +90,9 @@ func (db *GeoDB) Delete(keyId string) error {
 
 	res, err := redis.Bool(conn.Do("ZREM", db.index, keyId))
 
-	if err != nil {
+	keyNotFound := res == false
+	if err != nil || keyNotFound {
 		return errors.Errorf("Error deleting POI with key '%s'", keyId)
-	} else if res == false {
-		return errors.Errorf("Error, key not found")
 	}
 
 	return nil

@@ -52,7 +52,6 @@ var (
 		ConsumerId: "",
 		BidPrice:   0,
 	}
-
 	// test order structs for json marshal/unmarshal functions
 	_testOrder1 = &Order{
 		Location: OrderLocation{

@@ -16,9 +16,15 @@ type KeyDB interface {
 
 type GeoDB interface {
 	Insert(keyId string, coord map[string]float64) error
+	SelectAllInRadius(coord map[string]float64, radius float64) ([]string, error)
 	Select(keyId string) (map[string]float64, error)
 	Delete(keyId string) error
 	Clear() error
+}
+
+type Locker interface {
+	LockKey(keyId string) error
+	UnlockKey(keyId string) error
 }
 
 type OrderManager struct {
@@ -65,26 +71,38 @@ func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
 	return order, nil
 }
 
-func (om *OrderManager) GetNearestOrder(lon float64, lat float64, radius float64) (*order.Order, error) {
+// func (om *OrderManager) GetNearestOrder(lon float64, lat float64, radius float64) (*order.Order, error) {
+//
+// 	coords := map[string]float64{
+// 		"lon": lon,
+// 		"lat": lat,
+// 	}
+//
+// 	orderIds, err := om.geoDB.SelectAllInRadius(coords, radius)
+// 	// if generic error, return err
+// 	// if err is no nearby POI found, continue
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// attempt to lock an order, from nearest to furthest order distance
+// 	for _, orderId := orderIds {
+// 		err = om.geoDB.LockKey(orderId)
+//
+// 		if err != nil {	// check specific err type!
+// 			return nil, err
+// 		}
+//
+//
+//
+// 	}
+//
+// 	// at this point, no order locked, so retry (continue or goto?)
+//
+//
+// }
 
-	coords := map[string]float64{
-		"lon": lon,
-		"lat": lat,
-	}
 
-	for {
-		// test selecting empty!
-		orderId, err := om.geoDB.SelectNearestInRadius(coords, radius)
-		if err != nil {
-			return err
-		}
-
-
-
-	}
-
-	return keyDB.GetOrder(orderId)
-}
 
 // tested
 func (om *OrderManager) DeleteOrder(orderId string) error {

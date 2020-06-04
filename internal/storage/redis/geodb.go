@@ -67,9 +67,8 @@ func (db *GeoDB) SelectNearestInRadius(coords map[string]float64, radius float64
 	if err != nil {
 		errStr := "Error selecting nearest POI to (%v, %v) within %v km"
 		return "", errors.Errorf(errStr, coords["lon"], coords["lat"], radius)
-	}
-	if len(res) == 0 {
-		return "", errors.Errorf("No nearby POI found")
+	} else if len(res) == 0 {
+		return "", errors.Errorf("Error, no nearby POI found")
 	}
 
 	closestPOIKeyId := res[0]
@@ -82,9 +81,10 @@ func (db *GeoDB) Delete(keyId string) error {
 
 	res, err := redis.Bool(conn.Do("ZREM", db.index, keyId))
 
-	keyNotFound := res == false
-	if err != nil || keyNotFound {
+	if err != nil {
 		return errors.Errorf("Error deleting POI with key '%s'", keyId)
+	} else if res == false {
+		return errors.Errorf("Error, key not found")
 	}
 
 	return nil

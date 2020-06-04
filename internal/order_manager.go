@@ -65,8 +65,25 @@ func (om *OrderManager) GetOrder(orderId string) (*order.Order, error) {
 	return order, nil
 }
 
-func (om *OrderManager) GetNearestOrder(lon float64, lat float64, radius float64) {
-	
+func (om *OrderManager) GetNearestOrder(lon float64, lat float64, radius float64) (*order.Order, error) {
+
+	coords := map[string]float64{
+		"lon": lon,
+		"lat": lat,
+	}
+
+	for {
+		// test selecting empty!
+		orderId, err := om.geoDB.SelectNearestInRadius(coords, radius)
+		if err != nil {
+			return err
+		}
+
+
+
+	}
+
+	return keyDB.GetOrder(orderId)
 }
 
 // tested
@@ -75,7 +92,7 @@ func (om *OrderManager) DeleteOrder(orderId string) error {
 		return err
 	}
 
-  return om.geoDB.Delete(orderId)
+	return om.geoDB.Delete(orderId)
 }
 
 // tested

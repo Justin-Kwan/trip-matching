@@ -64,10 +64,12 @@ func (db *GeoDB) SelectNearestInRadius(coords map[string]float64, radius float64
 		"ASC",
 	))
 
-	noNearbyPOI := len(res) == 0
-	if err != nil || noNearbyPOI {
+	if err != nil {
 		errStr := "Error selecting nearest POI to (%v, %v) within %v km"
 		return "", errors.Errorf(errStr, coords["lon"], coords["lat"], radius)
+	}
+	if len(res) == 0 {
+		return "", errors.Errorf("No nearby POI found")
 	}
 
 	closestPOIKeyId := res[0]

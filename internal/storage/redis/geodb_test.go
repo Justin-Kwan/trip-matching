@@ -189,6 +189,13 @@ func TestSelectNearestInRadius(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
+	// test on empty db
+	coord := map[string]float64{53.123, 84.9823}
+	POIkeyId, err := _geoDB.SelectNearestInRadius(coord, 10000)
+
+	
+	assert.Equal(t, "", POIkeyId, "should match closest point of interest's key id within radius")
+
 	// setup
 	for _, testPOI := range testPOIs {
 		if err := _geoDB.Insert(testPOI.id, testPOI.coord); err != nil {

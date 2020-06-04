@@ -21,6 +21,7 @@ func (db *KeyDB) Insert(keyId, res string) error {
 	defer conn.Close()
 
 	res, err := redis.String(conn.Do("SET", keyId, res))
+	
 	if err != nil {
 		return errors.Errorf("Error inserting key '%s'", keyId)
 	}
